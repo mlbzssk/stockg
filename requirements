@@ -1,0 +1,9 @@
+akshare==1.17.1
+openai
+pandas
+numpy
+# RAG 知识库（PDF 读取 + 本地 BGE-zh 向量化 + Chroma 向量库）
+pypdf
+sentence-transformers
+chromadb
+langgraph

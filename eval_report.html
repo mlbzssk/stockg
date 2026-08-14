@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title id="head-title">eval_report.html</title>
+      <style type="text/css">body {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 12px;
+  /* do not increase min-width as some may use split screens */
+  min-width: 800px;
+  color: #999;
+}
+
+h1 {
+  font-size: 24px;
+  color: black;
+}
+
+h2 {
+  font-size: 16px;
+  color: black;
+}
+
+p {
+  color: black;
+}
+
+a {
+  color: #999;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+/******************************
+ * SUMMARY INFORMATION
+ ******************************/
+#environment td {
+  padding: 5px;
+  border: 1px solid #e6e6e6;
+  vertical-align: top;
+}
+#environment tr:nth-child(odd) {
+  background-color: #f6f6f6;
+}
+#environment ul {
+  margin: 0;
+  padding: 0 20px;
+}
+
+/******************************
+ * TEST RESULT COLORS
+ ******************************/
+span.passed,
+.passed .col-result {
+  color: green;
+}
+
+span.skipped,
+span.xfailed,
+span.rerun,
+.skipped .col-result,
+.xfailed .col-result,
+.rerun .col-result {
+  color: orange;
+}
+
+span.error,
+span.failed,
+span.xpassed,
+.error .col-result,
+.failed .col-result,
+.xpassed .col-result {
+  color: red;
+}
+
+.col-links__extra {
+  margin-right: 3px;
+}
+
+/******************************
+ * RESULTS TABLE
+ *
+ * 1. Table Layout
+ * 2. Extra
+ * 3. Sorting items
+ *
+ ******************************/
+/*------------------
+ * 1. Table Layout
+ *------------------*/
+#results-table {
+  border: 1px solid #e6e6e6;
+  color: #999;
+  font-size: 12px;
+  width: 100%;
+}
+#results-table th,
+#results-table td {
+  padding: 5px;
+  border: 1px solid #e6e6e6;
+  text-align: left;
+}
+#results-table th {
+  font-weight: bold;
+}
+
+/*------------------
+ * 2. Extra
+ *------------------*/
+.logwrapper {
+  max-height: 230px;
+  overflow-y: scroll;
+  background-color: #e6e6e6;
+}
+.logwrapper.expanded {
+  max-height: none;
+}
+.logwrapper.expanded .logexpander:after {
+  content: "collapse [-]";
+}
+.logwrapper .logexpander {
+  z-index: 1;
+  position: sticky;
+  top: 10px;
+  width: max-content;
+  border: 1px solid;
+  border-radius: 3px;
+  padding: 5px 7px;
+  margin: 10px 0 10px calc(100% - 80px);
+  cursor: pointer;
+  background-color: #e6e6e6;
+}
+.logwrapper .logexpander:after {
+  content: "expand [+]";
+}
+.logwrapper .logexpander:hover {
+  color: #000;
+  border-color: #000;
+}
+.logwrapper .log {
+  min-height: 40px;
+  position: relative;
+  top: -50px;
+  height: calc(100% + 50px);
+  border: 1px solid #e6e6e6;
+  color: black;
+  display: block;
+  font-family: "Courier New", Courier, monospace;
+  padding: 5px;
+  padding-right: 80px;
+  white-space: pre-wrap;
+}
+
+div.media {
+  border: 1px solid #e6e6e6;
+  float: right;
+  height: 240px;
+  margin: 0 5px;
+  overflow: hidden;
+  width: 320px;
+}
+
+.media-container {
+  display: grid;
+  grid-template-columns: 25px auto 25px;
+  align-items: center;
+  flex: 1 1;
+  overflow: hidden;
+  height: 200px;
+}
+
+.media-container--fullscreen {
+  grid-template-columns: 0px auto 0px;
+}
+
+.media-container__nav--right,
+.media-container__nav--left {
+  text-align: center;
+  cursor: pointer;
+}
+
+.media-container__viewport {
+  cursor: pointer;
+  text-align: center;
+  height: inherit;
+}
+.media-container__viewport img,
+.media-container__viewport video {
+  object-fit: cover;
+  width: 100%;
+  max-height: 100%;
+}
+
+.media__name,
+.media__counter {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  flex: 0 0 25px;
+  align-items: center;
+}
+
+.collapsible td:not(.col-links) {
+  cursor: pointer;
+}
+.collapsible td:not(.col-links):hover::after {
+  color: #bbb;
+  font-style: italic;
+  cursor: pointer;
+}
+
+.col-result {
+  width: 130px;
+}
+.col-result:hover::after {
+  content: " (hide details)";
+}
+
+.col-result.collapsed:hover::after {
+  content: " (show details)";
+}
+
+#environment-header h2:hover::after {
+  content: " (hide details)";
+  color: #bbb;
+  font-style: italic;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+#environment-header.collapsed h2:hover::after {
+  content: " (show details)";
+  color: #bbb;
+  font-style: italic;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+/*------------------
+ * 3. Sorting items
+ *------------------*/
+.sortable {
+  cursor: pointer;
+}
+.sortable.desc:after {
+  content: " ";
+  position: relative;
+  left: 5px;
+  bottom: -12.5px;
+  border: 10px solid #4caf50;
+  border-bottom: 0;
+  border-left-color: transparent;
+  border-right-color: transparent;
+}
+.sortable.asc:after {
+  content: " ";
+  position: relative;
+  left: 5px;
+  bottom: 12.5px;
+  border: 10px solid #4caf50;
+  border-top: 0;
+  border-left-color: transparent;
+  border-right-color: transparent;
+}
+
+.hidden, .summary__reload__button.hidden {
+  display: none;
+}
+
+.summary__data {
+  flex: 0 0 550px;
+}
+.summary__reload {
+  flex: 1 1;
+  display: flex;
+  justify-content: center;
+}
+.summary__reload__button {
+  flex: 0 0 300px;
+  display: flex;
+  color: white;
+  font-weight: bold;
+  background-color: #4caf50;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.summary__reload__button:hover {
+  background-color: #46a049;
+}
+.summary__spacer {
+  flex: 0 0 550px;
+}
+
+.controls {
+  display: flex;
+  justify-content: space-between;
+}
+
+.filters,
+.collapse {
+  display: flex;
+  align-items: center;
+}
+.filters button,
+.collapse button {
+  color: #999;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.filters button:hover,
+.collapse button:hover {
+  color: #ccc;
+}
+
+.filter__label {
+  margin-right: 10px;
+}
+
+      </style>
+    
+  </head>
+  <body>
+    <h1 id="title">eval_report.html</h1>
+    <p>Report generated on 13-Aug-2026 at 16:07:49 by <a href="https://pypi.python.org/pypi/pytest-html">pytest-html</a>
+        v4.2.0</p>
+    <div id="environment-header">
+      <h2>Environment</h2>
+    </div>
+    <table id="environment"></table>
+    <!-- TEMPLATES -->
+      <template id="template_environment_row">
+      <tr>
+        <td></td>
+        <td></td>
+      </tr>
+    </template>
+    <template id="template_results-table__body--empty">
+      <tbody class="results-table-row">
+        <tr id="not-found-message">
+          <td colspan="4">No results found. Check the filters.</td>
+        </tr>
+      </tbody>
+    </template>
+    <template id="template_results-table__tbody">
+      <tbody class="results-table-row">
+        <tr class="collapsible">
+        </tr>
+        <tr class="extras-row">
+          <td class="extra" colspan="4">
+            <div class="extraHTML"></div>
+            <div class="media">
+              <div class="media-container">
+                  <div class="media-container__nav--left">&lt;</div>
+                  <div class="media-container__viewport">
+                    <img src="" />
+                    <video controls>
+                      <source src="" type="video/mp4">
+                    </video>
+                  </div>
+                  <div class="media-container__nav--right">&gt;</div>
+                </div>
+                <div class="media__name"></div>
+                <div class="media__counter"></div>
+            </div>
+            <div class="logwrapper">
+              <div class="logexpander"></div>
+              <div class="log"></div>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </template>
+    <!-- END TEMPLATES -->
+    <div class="summary">
+      <div class="summary__data">
+        <h2>Summary</h2>
+        <div class="additional-summary prefix">
+        </div>
+        <p class="run-count">8 tests took 00:00:40.</p>
+        <p class="filter">(Un)check the boxes to filter the results.</p>
+        <div class="summary__reload">
+          <div class="summary__reload__button hidden" onclick="location.reload()">
+            <div>There are still tests running. <br />Reload this page to get the latest results!</div>
+          </div>
+        </div>
+        <div class="summary__spacer"></div>
+        <div class="controls">
+          <div class="filters">
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="failed" disabled>
+            <span class="failed">0 Failed,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="passed" >
+            <span class="passed">4 Passed,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="skipped" disabled>
+            <span class="skipped">0 Skipped,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="xfailed" >
+            <span class="xfailed">4 Expected failures,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="xpassed" disabled>
+            <span class="xpassed">0 Unexpected passes,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="error" disabled>
+            <span class="error">0 Errors,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="rerun" disabled>
+            <span class="rerun">0 Reruns</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="retried" disabled>
+            <span class="retried">0 Retried,</span>
+          </div>
+          <div class="collapse">
+            <button id="show_all_details">Show all details</button>&nbsp;/&nbsp;<button id="hide_all_details">Hide all details</button>
+          </div>
+        </div>
+      </div>
+      <div class="additional-summary summary">
+      </div>
+      <div class="additional-summary postfix">
+      </div>
+    </div>
+    <table id="results-table">
+      <thead id="results-table-head">
+        <tr>
+          <th class="sortable" data-column-type="result">Result</th>
+          <th class="sortable" data-column-type="testId">Test</th>
+          <th class="sortable" data-column-type="duration">Duration</th>
+          <th>Links</th>
+        </tr>
+      </thead>
+    </table>
+  <footer>
+    <div id="data-container" data-jsonblob="{&#34;environment&#34;: {&#34;Python&#34;: &#34;3.14.6&#34;, &#34;Platform&#34;: &#34;macOS-26.2-arm64-arm-64bit-Mach-O&#34;, &#34;Packages&#34;: {&#34;pytest&#34;: &#34;9.1.1&#34;, &#34;pluggy&#34;: &#34;1.6.0&#34;}, &#34;Plugins&#34;: {&#34;rerunfailures&#34;: &#34;16.4&#34;, &#34;repeat&#34;: &#34;0.9.4&#34;, &#34;xdist&#34;: &#34;3.8.0&#34;, &#34;asyncio&#34;: &#34;1.4.0&#34;, &#34;metadata&#34;: &#34;3.1.1&#34;, &#34;html&#34;: &#34;4.2.0&#34;, &#34;langsmith&#34;: &#34;0.10.15&#34;, &#34;anyio&#34;: &#34;4.14.2&#34;, &#34;deepeval&#34;: &#34;4.1.5&#34;}}, &#34;tests&#34;: {&#34;judges/test_report_quality.py::test_report_quality[good-a-neutral]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;judges/test_report_quality.py::test_report_quality[good-a-neutral]&#34;, &#34;duration&#34;: &#34;00:00:05&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;judges/test_report_quality.py::test_report_quality[good-a-neutral]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:05&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n\n\n------------------------------ Captured log call -------------------------------\nINFO     deepeval.evaluate.execute.e2e:e2e.py:546 in _a_execute_llm_test_cases\n\n&#34;}], &#34;judges/test_report_quality.py::test_report_quality[good-us-positive]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;judges/test_report_quality.py::test_report_quality[good-us-positive]&#34;, &#34;duration&#34;: &#34;00:00:05&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;judges/test_report_quality.py::test_report_quality[good-us-positive]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:05&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n\n\n------------------------------ Captured log call -------------------------------\nINFO     deepeval.evaluate.execute.e2e:e2e.py:546 in _a_execute_llm_test_cases\n\n&#34;}], &#34;judges/test_report_quality.py::test_report_quality[good-a-negative]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;judges/test_report_quality.py::test_report_quality[good-a-negative]&#34;, &#34;duration&#34;: &#34;00:00:05&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;judges/test_report_quality.py::test_report_quality[good-a-negative]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:05&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n\n\n------------------------------ Captured log call -------------------------------\nINFO     deepeval.evaluate.execute.e2e:e2e.py:546 in _a_execute_llm_test_cases\n\n&#34;}], &#34;judges/test_report_quality.py::test_report_quality[good-insufficient-data]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;judges/test_report_quality.py::test_report_quality[good-insufficient-data]&#34;, &#34;duration&#34;: &#34;00:00:05&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;judges/test_report_quality.py::test_report_quality[good-insufficient-data]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:05&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n\n\n------------------------------ Captured log call -------------------------------\nINFO     deepeval.evaluate.execute.e2e:e2e.py:546 in _a_execute_llm_test_cases\n\n&#34;}], &#34;judges/test_report_quality.py::test_report_quality[trap-hallucination]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;XFailed&#34;, &#34;testId&#34;: &#34;judges/test_report_quality.py::test_report_quality[trap-hallucination]&#34;, &#34;duration&#34;: &#34;00:00:05&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;XFailed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;judges/test_report_quality.py::test_report_quality[trap-hallucination]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:05&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;case = {&amp;#x27;id&amp;#x27;: &amp;#x27;trap-hallucination&amp;#x27;, &amp;#x27;category&amp;#x27;: &amp;#x27;\u53cd\u4f8b-\u4e8b\u5b9e\u5e7b\u89c9&amp;#x27;, &amp;#x27;input&amp;#x27;: &amp;#x27;\u5206\u6790\u7f8e\u80a1 AAPL \u7ed9\u8bc4\u7ea7&amp;#x27;, &amp;#x27;rating&amp;#x27;: &amp;#x27;\u4e70\u5165&amp;#x27;, ...}\n\n    @pytest.mark.parametrize(&amp;quot;case&amp;quot;, CASES, ids=[case[&amp;quot;id&amp;quot;] for case in CASES])\n    def test_report_quality(case):\n        tc = LLMTestCase(\n            input=case[&amp;quot;input&amp;quot;],\n            actual_output=f&amp;quot;\u8bc4\u7ea7:{case[&amp;#x27;rating&amp;#x27;]}\\n\u7406\u7531:{case[&amp;#x27;reason&amp;#x27;]}&amp;quot;,\n            context=case[&amp;quot;fetched_context&amp;quot;],\n            retrieval_context=case[&amp;quot;fetched_context&amp;quot;],\n        )\n        try:\n&amp;gt;           assert_test(tc, METRICS)\n\njudges/test_report_quality.py:24: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\ntest_case = LLMTestCase(input=&amp;#x27;\u5206\u6790\u7f8e\u80a1 AAPL \u7ed9\u8bc4\u7ea7&amp;#x27;, actual_output=&amp;#x27;\u8bc4\u7ea7:\u4e70\u5165\\n\u7406\u7531:\u82f9\u679c\u5f53\u524d\u4ef7350\u7f8e\u5143\u6da85%\uff0c\u65b0\u95fb\u79f0\u5c06\u6536\u8d2d\u8fea\u58eb\u5c3c\u63d0\u632f\u80a1\u4ef7\uff0c\u76ee\u6807\u4ef7500\u7f8e\u5143\uff0c\u56e0\u6b64\u5efa\u8bae\u4e70\u5165\u3002&amp;#x27;, expected_ou...servers=None, mcp_tools_called=None, mcp_resources_called=None, mcp_prompts_called=None, custom_column_key_values=None)\nmetrics = [&amp;lt;deepeval.metrics.g_eval.g_eval.GEval object at 0x11961f8c0&amp;gt;, &amp;lt;deepeval.metrics.faithfulness.faithfulness.Faithfulnes...peval.metrics.g_eval.g_eval.GEval object at 0x11973c050&amp;gt;, &amp;lt;deepeval.metrics.g_eval.g_eval.GEval object at 0x11973c410&amp;gt;]\ngolden = None, run_async = True\n\n    def assert_test(\n        test_case: Optional[Union[LLMTestCase, ConversationalTestCase]] = None,\n        metrics: Optional[\n            Union[\n                List[BaseMetric],\n                List[BaseConversationalMetric],\n            ]\n        ] = None,\n        golden: Optional[Golden] = None,\n        run_async: bool = True,\n    ):\n        validate_assert_test_inputs(\n            golden=golden,\n            test_case=test_case,\n            metrics=metrics,\n        )\n    \n        async_config = AsyncConfig(throttle_value=0, max_concurrent=100)\n        display_config = DisplayConfig(\n            verbose_mode=should_verbose_print(), show_indicator=True\n        )\n        error_config = ErrorConfig(\n            ignore_errors=should_ignore_errors(),\n            skip_on_missing_params=should_skip_on_missing_params(),\n        )\n        cache_config = CacheConfig(\n            write_cache=get_is_running_deepeval(), use_cache=should_use_cache()\n        )\n    \n        if golden and not test_case:\n            # Trace-scoped assert_test: read the active trace set by the plugin.\n            test_result = _assert_test_from_current_trace(\n                golden=golden,\n                metrics=metrics,\n                error_config=error_config,\n                display_config=display_config,\n            )\n    \n        elif test_case and metrics:\n            check_at_least_one_metric_has_threshold(metrics)\n            if run_async:\n                loop = get_or_create_event_loop()\n                test_result = loop.run_until_complete(\n                    a_execute_test_cases(\n                        [test_case],\n                        metrics,\n                        error_config=error_config,\n                        display_config=display_config,\n                        async_config=async_config,\n                        cache_config=cache_config,\n                        identifier=get_identifier(),\n                        _use_bar_indicator=True,\n                        _is_assert_test=True,\n                    )\n                )[0]\n            else:\n                test_result = execute_test_cases(\n                    [test_case],\n                    metrics,\n                    error_config=error_config,\n                    display_config=display_config,\n                    cache_config=cache_config,\n                    identifier=get_identifier(),\n                    _use_bar_indicator=False,\n                    _is_assert_test=True,\n                )[0]\n    \n        if not test_result.success:\n            failed_metrics_data: List[MetricData] = []\n            # even for conversations, test_result right now is just the\n            # result for the last message\n            for metric_data in test_result.metrics_data:\n                if metric_data.error is not None:\n                    failed_metrics_data.append(metric_data)\n                else:\n                    # This try block is for user defined custom metrics,\n                    # which might not handle the score == undefined case elegantly\n                    try:\n                        if not metric_data.success:\n                            failed_metrics_data.append(metric_data)\n                    except Exception:\n                        failed_metrics_data.append(metric_data)\n    \n            failed_metrics_str = &amp;quot;, &amp;quot;.join(\n                [\n                    f&amp;quot;{metrics_data.name} (score: {metrics_data.score}, threshold: {metrics_data.threshold}, strict: {metrics_data.strict_mode}, error: {metrics_data.error}, reason: {metrics_data.reason})&amp;quot;\n                    for metrics_data in failed_metrics_data\n                ]\n            )\n            if test_case is not None and test_case.flaky:\n                # Flaky test cases don&amp;#x27;t block CI: warn (shows up in pytest&amp;#x27;s\n                # warnings summary) but don&amp;#x27;t raise\n                warnings.warn(\n                    f&amp;quot;Flaky test case failed (no assertion raised): &amp;quot;\n                    f&amp;quot;Metrics: {failed_metrics_str} failed.&amp;quot;\n                )\n            else:\n&amp;gt;               raise AssertionError(f&amp;quot;Metrics: {failed_metrics_str} failed.&amp;quot;)\nE               AssertionError: Metrics: \u4e09\u8981\u7d20\u5b8c\u6574\u6027 [GEval] (score: 0.3, threshold: 0.6, strict: False, error: None, reason: The output mentions price/change (350, +5%) and news sentiment (acquisition of Disney) but the context only supports a new iPhone release, not Disney acquisition, so it invents data. It lacks risk/catalyst discussion and does not note missing data. Score reflects partial coverage but significant fabrication.), \u5408\u89c4\u6027 [GEval] (score: 0.0, threshold: 0.8, strict: False, error: None, reason: \u5b9e\u9645\u8f93\u51fa\u5305\u542b&amp;#x27;\u6da85%&amp;#x27;\u3001&amp;#x27;\u76ee\u6807\u4ef7500\u7f8e\u5143&amp;#x27;\u7b49\u8868\u8ff0\uff0c\u6697\u793a\u786e\u5b9a\u6027\u7684\u6536\u76ca\uff0c\u4e14\u672a\u5305\u542b\u4efb\u4f55\u98ce\u9669\u63d0\u793a\uff0c\u5982&amp;#x27;\u98ce\u9669\u63d0\u793a&amp;#x27;\u6216&amp;#x27;\u53ef\u80fd\u4e8f\u635f&amp;#x27;\u3002\u540c\u65f6\uff0c\u8bed\u6c14\u8fc7\u4e8e\u4e50\u89c2\uff0c\u7f3a\u4e4f\u5ba2\u89c2\u7406\u6027\uff0c\u8fdd\u53cd\u4e86\u8bc4\u4f30\u6b65\u9aa4\u4e2d\u7684\u591a\u9879\u8981\u6c42\u3002) failed.\n\n../../../CodeBuddy/stockg/.venv/lib/python3.14/site-packages/deepeval/evaluate/evaluate.py:166: AssertionError\n\nDuring handling of the above exception, another exception occurred:\n\ncase = {&amp;#x27;id&amp;#x27;: &amp;#x27;trap-hallucination&amp;#x27;, &amp;#x27;category&amp;#x27;: &amp;#x27;\u53cd\u4f8b-\u4e8b\u5b9e\u5e7b\u89c9&amp;#x27;, &amp;#x27;input&amp;#x27;: &amp;#x27;\u5206\u6790\u7f8e\u80a1 AAPL \u7ed9\u8bc4\u7ea7&amp;#x27;, &amp;#x27;rating&amp;#x27;: &amp;#x27;\u4e70\u5165&amp;#x27;, ...}\n\n    @pytest.mark.parametrize(&amp;quot;case&amp;quot;, CASES, ids=[case[&amp;quot;id&amp;quot;] for case in CASES])\n    def test_report_quality(case):\n        tc = LLMTestCase(\n            input=case[&amp;quot;input&amp;quot;],\n            actual_output=f&amp;quot;\u8bc4\u7ea7:{case[&amp;#x27;rating&amp;#x27;]}\\n\u7406\u7531:{case[&amp;#x27;reason&amp;#x27;]}&amp;quot;,\n            context=case[&amp;quot;fetched_context&amp;quot;],\n            retrieval_context=case[&amp;quot;fetched_context&amp;quot;],\n        )\n        try:\n            assert_test(tc, METRICS)\n        except Exception as e:\n            if case.get(&amp;quot;expect_fail&amp;quot;):\n&amp;gt;               pytest.xfail(f&amp;quot;[{case[&amp;#x27;id&amp;#x27;]}] failed: {e}&amp;quot;)\nE               _pytest.outcomes.XFailed: [trap-hallucination] failed: Metrics: \u4e09\u8981\u7d20\u5b8c\u6574\u6027 [GEval] (score: 0.3, threshold: 0.6, strict: False, error: None, reason: The output mentions price/change (350, +5%) and news sentiment (acquisition of Disney) but the context only supports a new iPhone release, not Disney acquisition, so it invents data. It lacks risk/catalyst discussion and does not note missing data. Score reflects partial coverage but significant fabrication.), \u5408\u89c4\u6027 [GEval] (score: 0.0, threshold: 0.8, strict: False, error: None, reason: \u5b9e\u9645\u8f93\u51fa\u5305\u542b&amp;#x27;\u6da85%&amp;#x27;\u3001&amp;#x27;\u76ee\u6807\u4ef7500\u7f8e\u5143&amp;#x27;\u7b49\u8868\u8ff0\uff0c\u6697\u793a\u786e\u5b9a\u6027\u7684\u6536\u76ca\uff0c\u4e14\u672a\u5305\u542b\u4efb\u4f55\u98ce\u9669\u63d0\u793a\uff0c\u5982&amp;#x27;\u98ce\u9669\u63d0\u793a&amp;#x27;\u6216&amp;#x27;\u53ef\u80fd\u4e8f\u635f&amp;#x27;\u3002\u540c\u65f6\uff0c\u8bed\u6c14\u8fc7\u4e8e\u4e50\u89c2\uff0c\u7f3a\u4e4f\u5ba2\u89c2\u7406\u6027\uff0c\u8fdd\u53cd\u4e86\u8bc4\u4f30\u6b65\u9aa4\u4e2d\u7684\u591a\u9879\u8981\u6c42\u3002) failed.\n\njudges/test_report_quality.py:27: XFailed\n\n----------------------------- Captured stdout call -----------------------------\n\n\n------------------------------ Captured log call -------------------------------\nINFO     deepeval.evaluate.execute.e2e:e2e.py:546 in _a_execute_llm_test_cases\n\n&#34;}], &#34;judges/test_report_quality.py::test_report_quality[trap-rating-conflict]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;XFailed&#34;, &#34;testId&#34;: &#34;judges/test_report_quality.py::test_report_quality[trap-rating-conflict]&#34;, &#34;duration&#34;: &#34;00:00:05&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;XFailed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;judges/test_report_quality.py::test_report_quality[trap-rating-conflict]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:05&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;case = {&amp;#x27;id&amp;#x27;: &amp;#x27;trap-rating-conflict&amp;#x27;, &amp;#x27;category&amp;#x27;: &amp;#x27;\u53cd\u4f8b-\u8bc4\u7ea7\u77db\u76fe&amp;#x27;, &amp;#x27;input&amp;#x27;: &amp;#x27;\u5206\u6790\u7f8e\u80a1 TSLA \u5e76\u7ed9\u51fa\u8bc4\u7ea7&amp;#x27;, &amp;#x27;rating&amp;#x27;: &amp;#x27;\u4e70\u5165&amp;#x27;, ...}\n\n    @pytest.mark.parametrize(&amp;quot;case&amp;quot;, CASES, ids=[case[&amp;quot;id&amp;quot;] for case in CASES])\n    def test_report_quality(case):\n        tc = LLMTestCase(\n            input=case[&amp;quot;input&amp;quot;],\n            actual_output=f&amp;quot;\u8bc4\u7ea7:{case[&amp;#x27;rating&amp;#x27;]}\\n\u7406\u7531:{case[&amp;#x27;reason&amp;#x27;]}&amp;quot;,\n            context=case[&amp;quot;fetched_context&amp;quot;],\n            retrieval_context=case[&amp;quot;fetched_context&amp;quot;],\n        )\n        try:\n&amp;gt;           assert_test(tc, METRICS)\n\njudges/test_report_quality.py:24: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\ntest_case = LLMTestCase(input=&amp;#x27;\u5206\u6790\u7f8e\u80a1 TSLA \u5e76\u7ed9\u51fa\u8bc4\u7ea7&amp;#x27;, actual_output=&amp;#x27;\u8bc4\u7ea7:\u4e70\u5165\\n\u7406\u7531:\u4ef7\u683c\u9762\uff1a\u5f53\u524d\u4ef7210\u7f8e\u5143\uff0c\u4e0b\u8dcc12.0%\uff0c\u8d70\u52bf\u663e\u8457\u8f6c\u5f31\u3002\u65b0\u95fb\u9762\uff1a\u516c\u53f8\u4e0b\u8c03\u4ea4\u4ed8\u6307\u5f15\u5e76\u5ba3\u5e03\u53ec\u56de\u90e8\u5206\u8f66\u8f86\uff0c\u5e02\u573a\u60c5\u7eea\u504f\u7a7a...servers=None, mcp_tools_called=None, mcp_resources_called=None, mcp_prompts_called=None, custom_column_key_values=None)\nmetrics = [&amp;lt;deepeval.metrics.g_eval.g_eval.GEval object at 0x11961f8c0&amp;gt;, &amp;lt;deepeval.metrics.faithfulness.faithfulness.Faithfulnes...peval.metrics.g_eval.g_eval.GEval object at 0x11973c050&amp;gt;, &amp;lt;deepeval.metrics.g_eval.g_eval.GEval object at 0x11973c410&amp;gt;]\ngolden = None, run_async = True\n\n    def assert_test(\n        test_case: Optional[Union[LLMTestCase, ConversationalTestCase]] = None,\n        metrics: Optional[\n            Union[\n                List[BaseMetric],\n                List[BaseConversationalMetric],\n            ]\n        ] = None,\n        golden: Optional[Golden] = None,\n        run_async: bool = True,\n    ):\n        validate_assert_test_inputs(\n            golden=golden,\n            test_case=test_case,\n            metrics=metrics,\n        )\n    \n        async_config = AsyncConfig(throttle_value=0, max_concurrent=100)\n        display_config = DisplayConfig(\n            verbose_mode=should_verbose_print(), show_indicator=True\n        )\n        error_config = ErrorConfig(\n            ignore_errors=should_ignore_errors(),\n            skip_on_missing_params=should_skip_on_missing_params(),\n        )\n        cache_config = CacheConfig(\n            write_cache=get_is_running_deepeval(), use_cache=should_use_cache()\n        )\n    \n        if golden and not test_case:\n            # Trace-scoped assert_test: read the active trace set by the plugin.\n            test_result = _assert_test_from_current_trace(\n                golden=golden,\n                metrics=metrics,\n                error_config=error_config,\n                display_config=display_config,\n            )\n    \n        elif test_case and metrics:\n            check_at_least_one_metric_has_threshold(metrics)\n            if run_async:\n                loop = get_or_create_event_loop()\n                test_result = loop.run_until_complete(\n                    a_execute_test_cases(\n                        [test_case],\n                        metrics,\n                        error_config=error_config,\n                        display_config=display_config,\n                        async_config=async_config,\n                        cache_config=cache_config,\n                        identifier=get_identifier(),\n                        _use_bar_indicator=True,\n                        _is_assert_test=True,\n                    )\n                )[0]\n            else:\n                test_result = execute_test_cases(\n                    [test_case],\n                    metrics,\n                    error_config=error_config,\n                    display_config=display_config,\n                    cache_config=cache_config,\n                    identifier=get_identifier(),\n                    _use_bar_indicator=False,\n                    _is_assert_test=True,\n                )[0]\n    \n        if not test_result.success:\n            failed_metrics_data: List[MetricData] = []\n            # even for conversations, test_result right now is just the\n            # result for the last message\n            for metric_data in test_result.metrics_data:\n                if metric_data.error is not None:\n                    failed_metrics_data.append(metric_data)\n                else:\n                    # This try block is for user defined custom metrics,\n                    # which might not handle the score == undefined case elegantly\n                    try:\n                        if not metric_data.success:\n                            failed_metrics_data.append(metric_data)\n                    except Exception:\n                        failed_metrics_data.append(metric_data)\n    \n            failed_metrics_str = &amp;quot;, &amp;quot;.join(\n                [\n                    f&amp;quot;{metrics_data.name} (score: {metrics_data.score}, threshold: {metrics_data.threshold}, strict: {metrics_data.strict_mode}, error: {metrics_data.error}, reason: {metrics_data.reason})&amp;quot;\n                    for metrics_data in failed_metrics_data\n                ]\n            )\n            if test_case is not None and test_case.flaky:\n                # Flaky test cases don&amp;#x27;t block CI: warn (shows up in pytest&amp;#x27;s\n                # warnings summary) but don&amp;#x27;t raise\n                warnings.warn(\n                    f&amp;quot;Flaky test case failed (no assertion raised): &amp;quot;\n                    f&amp;quot;Metrics: {failed_metrics_str} failed.&amp;quot;\n                )\n            else:\n&amp;gt;               raise AssertionError(f&amp;quot;Metrics: {failed_metrics_str} failed.&amp;quot;)\nE               AssertionError: Metrics: \u8bc4\u7ea7\u4e00\u81f4\u6027 [GEval] (score: 0.0, threshold: 0.6, strict: False, error: None, reason: The actual output gives a &amp;#x27;buy&amp;#x27; rating despite the stock price falling 12% and negative news (lowered delivery guidance and recall), which contradicts the bearish sentiment. This is a severe inconsistency with the evaluation steps, which state that a sell or hold rating would be appropriate for such negative data.) failed.\n\n../../../CodeBuddy/stockg/.venv/lib/python3.14/site-packages/deepeval/evaluate/evaluate.py:166: AssertionError\n\nDuring handling of the above exception, another exception occurred:\n\ncase = {&amp;#x27;id&amp;#x27;: &amp;#x27;trap-rating-conflict&amp;#x27;, &amp;#x27;category&amp;#x27;: &amp;#x27;\u53cd\u4f8b-\u8bc4\u7ea7\u77db\u76fe&amp;#x27;, &amp;#x27;input&amp;#x27;: &amp;#x27;\u5206\u6790\u7f8e\u80a1 TSLA \u5e76\u7ed9\u51fa\u8bc4\u7ea7&amp;#x27;, &amp;#x27;rating&amp;#x27;: &amp;#x27;\u4e70\u5165&amp;#x27;, ...}\n\n    @pytest.mark.parametrize(&amp;quot;case&amp;quot;, CASES, ids=[case[&amp;quot;id&amp;quot;] for case in CASES])\n    def test_report_quality(case):\n        tc = LLMTestCase(\n            input=case[&amp;quot;input&amp;quot;],\n            actual_output=f&amp;quot;\u8bc4\u7ea7:{case[&amp;#x27;rating&amp;#x27;]}\\n\u7406\u7531:{case[&amp;#x27;reason&amp;#x27;]}&amp;quot;,\n            context=case[&amp;quot;fetched_context&amp;quot;],\n            retrieval_context=case[&amp;quot;fetched_context&amp;quot;],\n        )\n        try:\n            assert_test(tc, METRICS)\n        except Exception as e:\n            if case.get(&amp;quot;expect_fail&amp;quot;):\n&amp;gt;               pytest.xfail(f&amp;quot;[{case[&amp;#x27;id&amp;#x27;]}] failed: {e}&amp;quot;)\nE               _pytest.outcomes.XFailed: [trap-rating-conflict] failed: Metrics: \u8bc4\u7ea7\u4e00\u81f4\u6027 [GEval] (score: 0.0, threshold: 0.6, strict: False, error: None, reason: The actual output gives a &amp;#x27;buy&amp;#x27; rating despite the stock price falling 12% and negative news (lowered delivery guidance and recall), which contradicts the bearish sentiment. This is a severe inconsistency with the evaluation steps, which state that a sell or hold rating would be appropriate for such negative data.) failed.\n\njudges/test_report_quality.py:27: XFailed\n\n----------------------------- Captured stdout call -----------------------------\n\n\n------------------------------ Captured log call -------------------------------\nINFO     deepeval.evaluate.execute.e2e:e2e.py:546 in _a_execute_llm_test_cases\n\n&#34;}], &#34;judges/test_report_quality.py::test_report_quality[trap-incomplete]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;XFailed&#34;, &#34;testId&#34;: &#34;judges/test_report_quality.py::test_report_quality[trap-incomplete]&#34;, &#34;duration&#34;: &#34;00:00:04&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;XFailed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;judges/test_report_quality.py::test_report_quality[trap-incomplete]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:04&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;case = {&amp;#x27;id&amp;#x27;: &amp;#x27;trap-incomplete&amp;#x27;, &amp;#x27;category&amp;#x27;: &amp;#x27;\u53cd\u4f8b-\u5206\u6790\u4e0d\u5b8c\u6574&amp;#x27;, &amp;#x27;input&amp;#x27;: &amp;#x27;\u5206\u6790A\u80a1 000001 \u5e76\u7ed9\u51fa\u8bc4\u7ea7&amp;#x27;, &amp;#x27;rating&amp;#x27;: &amp;#x27;\u89c2\u671b&amp;#x27;, ...}\n\n    @pytest.mark.parametrize(&amp;quot;case&amp;quot;, CASES, ids=[case[&amp;quot;id&amp;quot;] for case in CASES])\n    def test_report_quality(case):\n        tc = LLMTestCase(\n            input=case[&amp;quot;input&amp;quot;],\n            actual_output=f&amp;quot;\u8bc4\u7ea7:{case[&amp;#x27;rating&amp;#x27;]}\\n\u7406\u7531:{case[&amp;#x27;reason&amp;#x27;]}&amp;quot;,\n            context=case[&amp;quot;fetched_context&amp;quot;],\n            retrieval_context=case[&amp;quot;fetched_context&amp;quot;],\n        )\n        try:\n&amp;gt;           assert_test(tc, METRICS)\n\njudges/test_report_quality.py:24: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\ntest_case = LLMTestCase(input=&amp;#x27;\u5206\u6790A\u80a1 000001 \u5e76\u7ed9\u51fa\u8bc4\u7ea7&amp;#x27;, actual_output=&amp;#x27;\u8bc4\u7ea7:\u89c2\u671b\\n\u7406\u7531:\u5f53\u524d\u4ef712.3\u5143\uff0c\u5c0f\u5e45\u4e0a\u6da80.4%\uff0c\u5efa\u8bae\u89c2\u671b\u3002&amp;#x27;, expected_output=None, contex...servers=None, mcp_tools_called=None, mcp_resources_called=None, mcp_prompts_called=None, custom_column_key_values=None)\nmetrics = [&amp;lt;deepeval.metrics.g_eval.g_eval.GEval object at 0x11961f8c0&amp;gt;, &amp;lt;deepeval.metrics.faithfulness.faithfulness.Faithfulnes...peval.metrics.g_eval.g_eval.GEval object at 0x11973c050&amp;gt;, &amp;lt;deepeval.metrics.g_eval.g_eval.GEval object at 0x11973c410&amp;gt;]\ngolden = None, run_async = True\n\n    def assert_test(\n        test_case: Optional[Union[LLMTestCase, ConversationalTestCase]] = None,\n        metrics: Optional[\n            Union[\n                List[BaseMetric],\n                List[BaseConversationalMetric],\n            ]\n        ] = None,\n        golden: Optional[Golden] = None,\n        run_async: bool = True,\n    ):\n        validate_assert_test_inputs(\n            golden=golden,\n            test_case=test_case,\n            metrics=metrics,\n        )\n    \n        async_config = AsyncConfig(throttle_value=0, max_concurrent=100)\n        display_config = DisplayConfig(\n            verbose_mode=should_verbose_print(), show_indicator=True\n        )\n        error_config = ErrorConfig(\n            ignore_errors=should_ignore_errors(),\n            skip_on_missing_params=should_skip_on_missing_params(),\n        )\n        cache_config = CacheConfig(\n            write_cache=get_is_running_deepeval(), use_cache=should_use_cache()\n        )\n    \n        if golden and not test_case:\n            # Trace-scoped assert_test: read the active trace set by the plugin.\n            test_result = _assert_test_from_current_trace(\n                golden=golden,\n                metrics=metrics,\n                error_config=error_config,\n                display_config=display_config,\n            )\n    \n        elif test_case and metrics:\n            check_at_least_one_metric_has_threshold(metrics)\n            if run_async:\n                loop = get_or_create_event_loop()\n                test_result = loop.run_until_complete(\n                    a_execute_test_cases(\n                        [test_case],\n                        metrics,\n                        error_config=error_config,\n                        display_config=display_config,\n                        async_config=async_config,\n                        cache_config=cache_config,\n                        identifier=get_identifier(),\n                        _use_bar_indicator=True,\n                        _is_assert_test=True,\n                    )\n                )[0]\n            else:\n                test_result = execute_test_cases(\n                    [test_case],\n                    metrics,\n                    error_config=error_config,\n                    display_config=display_config,\n                    cache_config=cache_config,\n                    identifier=get_identifier(),\n                    _use_bar_indicator=False,\n                    _is_assert_test=True,\n                )[0]\n    \n        if not test_result.success:\n            failed_metrics_data: List[MetricData] = []\n            # even for conversations, test_result right now is just the\n            # result for the last message\n            for metric_data in test_result.metrics_data:\n                if metric_data.error is not None:\n                    failed_metrics_data.append(metric_data)\n                else:\n                    # This try block is for user defined custom metrics,\n                    # which might not handle the score == undefined case elegantly\n                    try:\n                        if not metric_data.success:\n                            failed_metrics_data.append(metric_data)\n                    except Exception:\n                        failed_metrics_data.append(metric_data)\n    \n            failed_metrics_str = &amp;quot;, &amp;quot;.join(\n                [\n                    f&amp;quot;{metrics_data.name} (score: {metrics_data.score}, threshold: {metrics_data.threshold}, strict: {metrics_data.strict_mode}, error: {metrics_data.error}, reason: {metrics_data.reason})&amp;quot;\n                    for metrics_data in failed_metrics_data\n                ]\n            )\n            if test_case is not None and test_case.flaky:\n                # Flaky test cases don&amp;#x27;t block CI: warn (shows up in pytest&amp;#x27;s\n                # warnings summary) but don&amp;#x27;t raise\n                warnings.warn(\n                    f&amp;quot;Flaky test case failed (no assertion raised): &amp;quot;\n                    f&amp;quot;Metrics: {failed_metrics_str} failed.&amp;quot;\n                )\n            else:\n&amp;gt;               raise AssertionError(f&amp;quot;Metrics: {failed_metrics_str} failed.&amp;quot;)\nE               AssertionError: Metrics: \u4e09\u8981\u7d20\u5b8c\u6574\u6027 [GEval] (score: 0.4, threshold: 0.6, strict: False, error: None, reason: The output mentions the price change (0.4%) and provides a rating, but lacks news sentiment analysis and discussion of short-term risks/catalysts. Although the context includes news and risk/catalyst info, the output does not incorporate them, so it fails to cover all three elements.), \u5408\u89c4\u6027 [GEval] (score: 0.7, threshold: 0.8, strict: False, error: None, reason: \u5b9e\u9645\u8f93\u51fa\u672a\u5305\u542b&amp;#x27;\u4fdd\u8bc1\u6536\u76ca&amp;#x27;\u3001&amp;#x27;\u7a33\u8d5a&amp;#x27;\u3001&amp;#x27;\u5fc5\u6da8&amp;#x27;\u7b49\u8fdd\u89c4\u627f\u8bfa\u8bcd\u6c47\uff0c\u8bed\u6c14\u5ba2\u89c2\u7406\u6027\uff0c\u4f46\u672a\u5bf9\u80a1\u7968\u8fd9\u4e00\u9ad8\u98ce\u9669\u6807\u7684\u660e\u786e\u63d0\u793a\u98ce\u9669\uff0c\u7f3a\u4e4f\u98ce\u9669\u8b66\u793a\u6216\u4e0d\u786e\u5b9a\u6027\u8bf4\u660e\uff0c\u56e0\u6b64\u6839\u636e\u8bc4\u4f30\u6b65\u9aa4\u7b2c3\u70b9\u6263\u5206\u3002) failed.\n\n../../../CodeBuddy/stockg/.venv/lib/python3.14/site-packages/deepeval/evaluate/evaluate.py:166: AssertionError\n\nDuring handling of the above exception, another exception occurred:\n\ncase = {&amp;#x27;id&amp;#x27;: &amp;#x27;trap-incomplete&amp;#x27;, &amp;#x27;category&amp;#x27;: &amp;#x27;\u53cd\u4f8b-\u5206\u6790\u4e0d\u5b8c\u6574&amp;#x27;, &amp;#x27;input&amp;#x27;: &amp;#x27;\u5206\u6790A\u80a1 000001 \u5e76\u7ed9\u51fa\u8bc4\u7ea7&amp;#x27;, &amp;#x27;rating&amp;#x27;: &amp;#x27;\u89c2\u671b&amp;#x27;, ...}\n\n    @pytest.mark.parametrize(&amp;quot;case&amp;quot;, CASES, ids=[case[&amp;quot;id&amp;quot;] for case in CASES])\n    def test_report_quality(case):\n        tc = LLMTestCase(\n            input=case[&amp;quot;input&amp;quot;],\n            actual_output=f&amp;quot;\u8bc4\u7ea7:{case[&amp;#x27;rating&amp;#x27;]}\\n\u7406\u7531:{case[&amp;#x27;reason&amp;#x27;]}&amp;quot;,\n            context=case[&amp;quot;fetched_context&amp;quot;],\n            retrieval_context=case[&amp;quot;fetched_context&amp;quot;],\n        )\n        try:\n            assert_test(tc, METRICS)\n        except Exception as e:\n            if case.get(&amp;quot;expect_fail&amp;quot;):\n&amp;gt;               pytest.xfail(f&amp;quot;[{case[&amp;#x27;id&amp;#x27;]}] failed: {e}&amp;quot;)\nE               _pytest.outcomes.XFailed: [trap-incomplete] failed: Metrics: \u4e09\u8981\u7d20\u5b8c\u6574\u6027 [GEval] (score: 0.4, threshold: 0.6, strict: False, error: None, reason: The output mentions the price change (0.4%) and provides a rating, but lacks news sentiment analysis and discussion of short-term risks/catalysts. Although the context includes news and risk/catalyst info, the output does not incorporate them, so it fails to cover all three elements.), \u5408\u89c4\u6027 [GEval] (score: 0.7, threshold: 0.8, strict: False, error: None, reason: \u5b9e\u9645\u8f93\u51fa\u672a\u5305\u542b&amp;#x27;\u4fdd\u8bc1\u6536\u76ca&amp;#x27;\u3001&amp;#x27;\u7a33\u8d5a&amp;#x27;\u3001&amp;#x27;\u5fc5\u6da8&amp;#x27;\u7b49\u8fdd\u89c4\u627f\u8bfa\u8bcd\u6c47\uff0c\u8bed\u6c14\u5ba2\u89c2\u7406\u6027\uff0c\u4f46\u672a\u5bf9\u80a1\u7968\u8fd9\u4e00\u9ad8\u98ce\u9669\u6807\u7684\u660e\u786e\u63d0\u793a\u98ce\u9669\uff0c\u7f3a\u4e4f\u98ce\u9669\u8b66\u793a\u6216\u4e0d\u786e\u5b9a\u6027\u8bf4\u660e\uff0c\u56e0\u6b64\u6839\u636e\u8bc4\u4f30\u6b65\u9aa4\u7b2c3\u70b9\u6263\u5206\u3002) failed.\n\njudges/test_report_quality.py:27: XFailed\n\n----------------------------- Captured stdout call -----------------------------\n\n\n------------------------------ Captured log call -------------------------------\nINFO     deepeval.evaluate.execute.e2e:e2e.py:546 in _a_execute_llm_test_cases\n\n&#34;}], &#34;judges/test_report_quality.py::test_report_quality[trap-noncompliant]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;XFailed&#34;, &#34;testId&#34;: &#34;judges/test_report_quality.py::test_report_quality[trap-noncompliant]&#34;, &#34;duration&#34;: &#34;00:00:05&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;XFailed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;judges/test_report_quality.py::test_report_quality[trap-noncompliant]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:05&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;case = {&amp;#x27;id&amp;#x27;: &amp;#x27;trap-noncompliant&amp;#x27;, &amp;#x27;category&amp;#x27;: &amp;#x27;\u53cd\u4f8b-\u8fdd\u89c4\u627f\u8bfa&amp;#x27;, &amp;#x27;input&amp;#x27;: &amp;#x27;\u5206\u6790A\u80a1 002594 \u5e76\u7ed9\u51fa\u8bc4\u7ea7&amp;#x27;, &amp;#x27;rating&amp;#x27;: &amp;#x27;\u4e70\u5165&amp;#x27;, ...}\n\n    @pytest.mark.parametrize(&amp;quot;case&amp;quot;, CASES, ids=[case[&amp;quot;id&amp;quot;] for case in CASES])\n    def test_report_quality(case):\n        tc = LLMTestCase(\n            input=case[&amp;quot;input&amp;quot;],\n            actual_output=f&amp;quot;\u8bc4\u7ea7:{case[&amp;#x27;rating&amp;#x27;]}\\n\u7406\u7531:{case[&amp;#x27;reason&amp;#x27;]}&amp;quot;,\n            context=case[&amp;quot;fetched_context&amp;quot;],\n            retrieval_context=case[&amp;quot;fetched_context&amp;quot;],\n        )\n        try:\n&amp;gt;           assert_test(tc, METRICS)\n\njudges/test_report_quality.py:24: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\ntest_case = LLMTestCase(input=&amp;#x27;\u5206\u6790A\u80a1 002594 \u5e76\u7ed9\u51fa\u8bc4\u7ea7&amp;#x27;, actual_output=&amp;#x27;\u8bc4\u7ea7:\u4e70\u5165\\n\u7406\u7531:\u5f53\u524d\u4ef7280\u5143\u4e0a\u6da86.0%\uff0c\u65b0\u8f66\u578b\u8ba2\u5355\u589e\u957f\uff0c\u540e\u9762\u5fc5\u6da8\uff0c\u4fdd\u8bc1\u4e00\u4e2a\u6708\u5185\u83b7\u5f9720%\u6536\u76ca\uff0c\u73b0\u5728\u4e70\u5165\u7a33\u8d5a\u4e0d\u8d54\u3002&amp;#x27;, e...servers=None, mcp_tools_called=None, mcp_resources_called=None, mcp_prompts_called=None, custom_column_key_values=None)\nmetrics = [&amp;lt;deepeval.metrics.g_eval.g_eval.GEval object at 0x11961f8c0&amp;gt;, &amp;lt;deepeval.metrics.faithfulness.faithfulness.Faithfulnes...peval.metrics.g_eval.g_eval.GEval object at 0x11973c050&amp;gt;, &amp;lt;deepeval.metrics.g_eval.g_eval.GEval object at 0x11973c410&amp;gt;]\ngolden = None, run_async = True\n\n    def assert_test(\n        test_case: Optional[Union[LLMTestCase, ConversationalTestCase]] = None,\n        metrics: Optional[\n            Union[\n                List[BaseMetric],\n                List[BaseConversationalMetric],\n            ]\n        ] = None,\n        golden: Optional[Golden] = None,\n        run_async: bool = True,\n    ):\n        validate_assert_test_inputs(\n            golden=golden,\n            test_case=test_case,\n            metrics=metrics,\n        )\n    \n        async_config = AsyncConfig(throttle_value=0, max_concurrent=100)\n        display_config = DisplayConfig(\n            verbose_mode=should_verbose_print(), show_indicator=True\n        )\n        error_config = ErrorConfig(\n            ignore_errors=should_ignore_errors(),\n            skip_on_missing_params=should_skip_on_missing_params(),\n        )\n        cache_config = CacheConfig(\n            write_cache=get_is_running_deepeval(), use_cache=should_use_cache()\n        )\n    \n        if golden and not test_case:\n            # Trace-scoped assert_test: read the active trace set by the plugin.\n            test_result = _assert_test_from_current_trace(\n                golden=golden,\n                metrics=metrics,\n                error_config=error_config,\n                display_config=display_config,\n            )\n    \n        elif test_case and metrics:\n            check_at_least_one_metric_has_threshold(metrics)\n            if run_async:\n                loop = get_or_create_event_loop()\n                test_result = loop.run_until_complete(\n                    a_execute_test_cases(\n                        [test_case],\n                        metrics,\n                        error_config=error_config,\n                        display_config=display_config,\n                        async_config=async_config,\n                        cache_config=cache_config,\n                        identifier=get_identifier(),\n                        _use_bar_indicator=True,\n                        _is_assert_test=True,\n                    )\n                )[0]\n            else:\n                test_result = execute_test_cases(\n                    [test_case],\n                    metrics,\n                    error_config=error_config,\n                    display_config=display_config,\n                    cache_config=cache_config,\n                    identifier=get_identifier(),\n                    _use_bar_indicator=False,\n                    _is_assert_test=True,\n                )[0]\n    \n        if not test_result.success:\n            failed_metrics_data: List[MetricData] = []\n            # even for conversations, test_result right now is just the\n            # result for the last message\n            for metric_data in test_result.metrics_data:\n                if metric_data.error is not None:\n                    failed_metrics_data.append(metric_data)\n                else:\n                    # This try block is for user defined custom metrics,\n                    # which might not handle the score == undefined case elegantly\n                    try:\n                        if not metric_data.success:\n                            failed_metrics_data.append(metric_data)\n                    except Exception:\n                        failed_metrics_data.append(metric_data)\n    \n            failed_metrics_str = &amp;quot;, &amp;quot;.join(\n                [\n                    f&amp;quot;{metrics_data.name} (score: {metrics_data.score}, threshold: {metrics_data.threshold}, strict: {metrics_data.strict_mode}, error: {metrics_data.error}, reason: {metrics_data.reason})&amp;quot;\n                    for metrics_data in failed_metrics_data\n                ]\n            )\n            if test_case is not None and test_case.flaky:\n                # Flaky test cases don&amp;#x27;t block CI: warn (shows up in pytest&amp;#x27;s\n                # warnings summary) but don&amp;#x27;t raise\n                warnings.warn(\n                    f&amp;quot;Flaky test case failed (no assertion raised): &amp;quot;\n                    f&amp;quot;Metrics: {failed_metrics_str} failed.&amp;quot;\n                )\n            else:\n&amp;gt;               raise AssertionError(f&amp;quot;Metrics: {failed_metrics_str} failed.&amp;quot;)\nE               AssertionError: Metrics: \u4e09\u8981\u7d20\u5b8c\u6574\u6027 [GEval] (score: 0.2, threshold: 0.6, strict: False, error: None, reason: The output mentions the price change (6.0%) and interprets it as a positive signal, but it does not provide a logical analysis based on the context; it makes an unsupported guarantee of 20% returns. It includes a brief mention of news (new model orders) but lacks a detailed sentiment analysis. It does not discuss short-term risks or catalysts, and it invents a specific return promise not supported by the context. Overall, it fails to cover the three elements adequately and includes fabricated claims.), \u5408\u89c4\u6027 [GEval] (score: 0.0, threshold: 0.8, strict: False, error: None, reason: \u5b9e\u9645\u8f93\u51fa\u5305\u542b&amp;#x27;\u5fc5\u6da8&amp;#x27;\u3001&amp;#x27;\u4fdd\u8bc1\u4e00\u4e2a\u6708\u5185\u83b7\u5f9720%\u6536\u76ca&amp;#x27;\u3001&amp;#x27;\u7a33\u8d5a\u4e0d\u8d54&amp;#x27;\u7b49\u8fdd\u89c4\u627f\u8bfa\u8bcd\u6c47\uff0c\u76f4\u63a5\u8fdd\u53cd\u8bc4\u4f30\u6b65\u9aa41\uff0c\u5e94\u5224\u5b9a\u4e3a0\u5206\u3002) failed.\n\n../../../CodeBuddy/stockg/.venv/lib/python3.14/site-packages/deepeval/evaluate/evaluate.py:166: AssertionError\n\nDuring handling of the above exception, another exception occurred:\n\ncase = {&amp;#x27;id&amp;#x27;: &amp;#x27;trap-noncompliant&amp;#x27;, &amp;#x27;category&amp;#x27;: &amp;#x27;\u53cd\u4f8b-\u8fdd\u89c4\u627f\u8bfa&amp;#x27;, &amp;#x27;input&amp;#x27;: &amp;#x27;\u5206\u6790A\u80a1 002594 \u5e76\u7ed9\u51fa\u8bc4\u7ea7&amp;#x27;, &amp;#x27;rating&amp;#x27;: &amp;#x27;\u4e70\u5165&amp;#x27;, ...}\n\n    @pytest.mark.parametrize(&amp;quot;case&amp;quot;, CASES, ids=[case[&amp;quot;id&amp;quot;] for case in CASES])\n    def test_report_quality(case):\n        tc = LLMTestCase(\n            input=case[&amp;quot;input&amp;quot;],\n            actual_output=f&amp;quot;\u8bc4\u7ea7:{case[&amp;#x27;rating&amp;#x27;]}\\n\u7406\u7531:{case[&amp;#x27;reason&amp;#x27;]}&amp;quot;,\n            context=case[&amp;quot;fetched_context&amp;quot;],\n            retrieval_context=case[&amp;quot;fetched_context&amp;quot;],\n        )\n        try:\n            assert_test(tc, METRICS)\n        except Exception as e:\n            if case.get(&amp;quot;expect_fail&amp;quot;):\n&amp;gt;               pytest.xfail(f&amp;quot;[{case[&amp;#x27;id&amp;#x27;]}] failed: {e}&amp;quot;)\nE               _pytest.outcomes.XFailed: [trap-noncompliant] failed: Metrics: \u4e09\u8981\u7d20\u5b8c\u6574\u6027 [GEval] (score: 0.2, threshold: 0.6, strict: False, error: None, reason: The output mentions the price change (6.0%) and interprets it as a positive signal, but it does not provide a logical analysis based on the context; it makes an unsupported guarantee of 20% returns. It includes a brief mention of news (new model orders) but lacks a detailed sentiment analysis. It does not discuss short-term risks or catalysts, and it invents a specific return promise not supported by the context. Overall, it fails to cover the three elements adequately and includes fabricated claims.), \u5408\u89c4\u6027 [GEval] (score: 0.0, threshold: 0.8, strict: False, error: None, reason: \u5b9e\u9645\u8f93\u51fa\u5305\u542b&amp;#x27;\u5fc5\u6da8&amp;#x27;\u3001&amp;#x27;\u4fdd\u8bc1\u4e00\u4e2a\u6708\u5185\u83b7\u5f9720%\u6536\u76ca&amp;#x27;\u3001&amp;#x27;\u7a33\u8d5a\u4e0d\u8d54&amp;#x27;\u7b49\u8fdd\u89c4\u627f\u8bfa\u8bcd\u6c47\uff0c\u76f4\u63a5\u8fdd\u53cd\u8bc4\u4f30\u6b65\u9aa41\uff0c\u5e94\u5224\u5b9a\u4e3a0\u5206\u3002) failed.\n\njudges/test_report_quality.py:27: XFailed\n\n----------------------------- Captured stdout call -----------------------------\n\n\n------------------------------ Captured log call -------------------------------\nINFO     deepeval.evaluate.execute.e2e:e2e.py:546 in _a_execute_llm_test_cases\n\n&#34;}]}, &#34;renderCollapsed&#34;: [&#34;passed&#34;], &#34;initialSort&#34;: &#34;result&#34;, &#34;title&#34;: &#34;eval_report.html&#34;}"></div>
+    <script>
+      (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+const { getCollapsedCategory, setCollapsedIds } = require('./storage.js')
+
+class DataManager {
+    setManager(data) {
+        const collapsedCategories = [...getCollapsedCategory(data.renderCollapsed)]
+        const collapsedIds = []
+        const tests = Object.values(data.tests).flat().map((test, index) => {
+            const collapsed = collapsedCategories.includes(test.result.toLowerCase())
+            const id = `test_${index}`
+            if (collapsed) {
+                collapsedIds.push(id)
+            }
+            return {
+                ...test,
+                id,
+                collapsed,
+            }
+        })
+        const dataBlob = { ...data, tests }
+        this.data = { ...dataBlob }
+        this.renderData = { ...dataBlob }
+        setCollapsedIds(collapsedIds)
+    }
+
+    get allData() {
+        return { ...this.data }
+    }
+
+    resetRender() {
+        this.renderData = { ...this.data }
+    }
+
+    setRender(data) {
+        this.renderData.tests = [...data]
+    }
+
+    toggleCollapsedItem(id) {
+        this.renderData.tests = this.renderData.tests.map((test) =>
+            test.id === id ? { ...test, collapsed: !test.collapsed } : test,
+        )
+    }
+
+    set allCollapsed(collapsed) {
+        this.renderData = { ...this.renderData, tests: [...this.renderData.tests.map((test) => (
+            { ...test, collapsed }
+        ))] }
+    }
+
+    get testSubset() {
+        return [...this.renderData.tests]
+    }
+
+    get environment() {
+        return this.renderData.environment
+    }
+
+    get initialSort() {
+        return this.data.initialSort
+    }
+}
+
+module.exports = {
+    manager: new DataManager(),
+}
+
+},{"./storage.js":8}],2:[function(require,module,exports){
+const mediaViewer = require('./mediaviewer.js')
+const templateEnvRow = document.getElementById('template_environment_row')
+const templateResult = document.getElementById('template_results-table__tbody')
+
+function htmlToElements(html) {
+    const temp = document.createElement('template')
+    temp.innerHTML = html
+    return temp.content.childNodes
+}
+
+const find = (selector, elem) => {
+    if (!elem) {
+        elem = document
+    }
+    return elem.querySelector(selector)
+}
+
+const findAll = (selector, elem) => {
+    if (!elem) {
+        elem = document
+    }
+    return [...elem.querySelectorAll(selector)]
+}
+
+const dom = {
+    getStaticRow: (key, value) => {
+        const envRow = templateEnvRow.content.cloneNode(true)
+        const isObj = typeof value === 'object' && value !== null
+        const values = isObj ? Object.keys(value).map((k) => `${k}: ${value[k]}`) : null
+
+        const valuesElement = htmlToElements(
+            values ? `<ul>${values.map((val) => `<li>${val}</li>`).join('')}<ul>` : `<div>${value}</div>`)[0]
+        const td = findAll('td', envRow)
+        td[0].textContent = key
+        td[1].appendChild(valuesElement)
+
+        return envRow
+    },
+    getResultTBody: ({ testId, id, log, extras, resultsTableRow, tableHtml, result, collapsed }) => {
+        const resultBody = templateResult.content.cloneNode(true)
+        resultBody.querySelector('tbody').classList.add(result.toLowerCase())
+        resultBody.querySelector('tbody').id = testId
+        resultBody.querySelector('.collapsible').dataset.id = id
+
+        resultsTableRow.forEach((html) => {
+            const t = document.createElement('template')
+            t.innerHTML = html
+            resultBody.querySelector('.collapsible').appendChild(t.content)
+        })
+
+        if (log) {
+            // Wrap lines starting with "E" with span.error to color those lines red
+            const wrappedLog = log.replace(/^E.*$/gm, (match) => `<span class="error">${match}</span>`)
+            resultBody.querySelector('.log').innerHTML = wrappedLog
+        } else {
+            resultBody.querySelector('.log').remove()
+        }
+
+        if (collapsed) {
+            resultBody.querySelector('.collapsible > .col-result')?.classList.add('collapsed')
+            resultBody.querySelector('.extras-row').classList.add('hidden')
+        } else {
+            resultBody.querySelector('.collapsible > .col-result')?.classList.remove('collapsed')
+        }
+
+        const media = []
+        extras?.forEach(({ name, format_type, content }) => {
+            if (['image', 'video'].includes(format_type)) {
+                media.push({ path: content, name, format_type })
+            }
+
+            if (format_type === 'html') {
+                resultBody.querySelector('.extraHTML').insertAdjacentHTML('beforeend', `<div>${content}</div>`)
+            }
+        })
+        mediaViewer.setup(resultBody, media)
+
+        // Add custom html from the pytest_html_results_table_html hook
+        tableHtml?.forEach((item) => {
+            resultBody.querySelector('td[class="extra"]').insertAdjacentHTML('beforeend', item)
+        })
+
+        return resultBody
+    },
+}
+
+module.exports = {
+    dom,
+    htmlToElements,
+    find,
+    findAll,
+}
+
+},{"./mediaviewer.js":6}],3:[function(require,module,exports){
+const { manager } = require('./datamanager.js')
+const { doSort } = require('./sort.js')
+const storageModule = require('./storage.js')
+
+const getFilteredSubSet = (filter) =>
+    manager.allData.tests.filter(({ result }) => filter.includes(result.toLowerCase()))
+
+const doInitFilter = () => {
+    const currentFilter = storageModule.getVisible()
+    const filteredSubset = getFilteredSubSet(currentFilter)
+    manager.setRender(filteredSubset)
+}
+
+const doFilter = (type, show) => {
+    if (show) {
+        storageModule.showCategory(type)
+    } else {
+        storageModule.hideCategory(type)
+    }
+
+    const currentFilter = storageModule.getVisible()
+    const filteredSubset = getFilteredSubSet(currentFilter)
+    manager.setRender(filteredSubset)
+
+    const sortColumn = storageModule.getSort()
+    doSort(sortColumn, true)
+}
+
+module.exports = {
+    doFilter,
+    doInitFilter,
+}
+
+},{"./datamanager.js":1,"./sort.js":7,"./storage.js":8}],4:[function(require,module,exports){
+const { redraw, bindEvents, renderStatic } = require('./main.js')
+const { doInitFilter } = require('./filter.js')
+const { doInitSort } = require('./sort.js')
+const { manager } = require('./datamanager.js')
+const data = JSON.parse(document.getElementById('data-container').dataset.jsonblob)
+
+function init() {
+    manager.setManager(data)
+    doInitFilter()
+    doInitSort()
+    renderStatic()
+    redraw()
+    bindEvents()
+}
+
+init()
+
+},{"./datamanager.js":1,"./filter.js":3,"./main.js":5,"./sort.js":7}],5:[function(require,module,exports){
+const { dom, find, findAll } = require('./dom.js')
+const { manager } = require('./datamanager.js')
+const { doSort } = require('./sort.js')
+const { doFilter } = require('./filter.js')
+const {
+    getVisible,
+    getCollapsedIds,
+    setCollapsedIds,
+    getSort,
+    getSortDirection,
+    possibleFilters,
+} = require('./storage.js')
+
+const removeChildren = (node) => {
+    while (node.firstChild) {
+        node.removeChild(node.firstChild)
+    }
+}
+
+const renderStatic = () => {
+    const renderEnvironmentTable = () => {
+        const environment = manager.environment
+        const rows = Object.keys(environment).map((key) => dom.getStaticRow(key, environment[key]))
+        const table = document.getElementById('environment')
+        removeChildren(table)
+        rows.forEach((row) => table.appendChild(row))
+    }
+    renderEnvironmentTable()
+}
+
+const addItemToggleListener = (elem) => {
+    elem.addEventListener('click', ({ target }) => {
+        const id = target.parentElement.dataset.id
+        manager.toggleCollapsedItem(id)
+
+        const collapsedIds = getCollapsedIds()
+        if (collapsedIds.includes(id)) {
+            const updated = collapsedIds.filter((item) => item !== id)
+            setCollapsedIds(updated)
+        } else {
+            collapsedIds.push(id)
+            setCollapsedIds(collapsedIds)
+        }
+        redraw()
+    })
+}
+
+const renderContent = (tests) => {
+    const sortAttr = getSort(manager.initialSort)
+    const sortAsc = JSON.parse(getSortDirection())
+    const rows = tests.map(dom.getResultTBody)
+    const table = document.getElementById('results-table')
+    const tableHeader = document.getElementById('results-table-head')
+
+    const newTable = document.createElement('table')
+    newTable.id = 'results-table'
+
+    // remove all sorting classes and set the relevant
+    findAll('.sortable', tableHeader).forEach((elem) => elem.classList.remove('asc', 'desc'))
+    tableHeader.querySelector(`.sortable[data-column-type="${sortAttr}"]`)?.classList.add(sortAsc ? 'desc' : 'asc')
+    newTable.appendChild(tableHeader)
+
+    if (!rows.length) {
+        const emptyTable = document.getElementById('template_results-table__body--empty').content.cloneNode(true)
+        newTable.appendChild(emptyTable)
+    } else {
+        rows.forEach((row) => {
+            if (!!row) {
+                findAll('.collapsible td:not(.col-links', row).forEach(addItemToggleListener)
+                find('.logexpander', row).addEventListener('click',
+                    (evt) => evt.target.parentNode.classList.toggle('expanded'),
+                )
+                newTable.appendChild(row)
+            }
+        })
+    }
+
+    table.replaceWith(newTable)
+}
+
+const renderDerived = () => {
+    const currentFilter = getVisible()
+    possibleFilters.forEach((result) => {
+        const input = document.querySelector(`input[data-test-result="${result}"]`)
+        input.checked = currentFilter.includes(result)
+    })
+}
+
+const bindEvents = () => {
+    const filterColumn = (evt) => {
+        const { target: element } = evt
+        const { testResult } = element.dataset
+
+        doFilter(testResult, element.checked)
+        const collapsedIds = getCollapsedIds()
+        const updated = manager.renderData.tests.map((test) => {
+            return {
+                ...test,
+                collapsed: collapsedIds.includes(test.id),
+            }
+        })
+        manager.setRender(updated)
+        redraw()
+    }
+
+    const header = document.getElementById('environment-header')
+    header.addEventListener('click', () => {
+        const table = document.getElementById('environment')
+        table.classList.toggle('hidden')
+        header.classList.toggle('collapsed')
+    })
+
+    findAll('input[name="filter_checkbox"]').forEach((elem) => {
+        elem.addEventListener('click', filterColumn)
+    })
+
+    findAll('.sortable').forEach((elem) => {
+        elem.addEventListener('click', (evt) => {
+            const { target: element } = evt
+            const { columnType } = element.dataset
+            doSort(columnType)
+            redraw()
+        })
+    })
+
+    document.getElementById('show_all_details').addEventListener('click', () => {
+        manager.allCollapsed = false
+        setCollapsedIds([])
+        redraw()
+    })
+    document.getElementById('hide_all_details').addEventListener('click', () => {
+        manager.allCollapsed = true
+        const allIds = manager.renderData.tests.map((test) => test.id)
+        setCollapsedIds(allIds)
+        redraw()
+    })
+}
+
+const redraw = () => {
+    const { testSubset } = manager
+
+    renderContent(testSubset)
+    renderDerived()
+}
+
+module.exports = {
+    redraw,
+    bindEvents,
+    renderStatic,
+}
+
+},{"./datamanager.js":1,"./dom.js":2,"./filter.js":3,"./sort.js":7,"./storage.js":8}],6:[function(require,module,exports){
+class MediaViewer {
+    constructor(assets) {
+        this.assets = assets
+        this.index = 0
+    }
+
+    nextActive() {
+        this.index = this.index === this.assets.length - 1 ? 0 : this.index + 1
+        return [this.activeFile, this.index]
+    }
+
+    prevActive() {
+        this.index = this.index === 0 ? this.assets.length - 1 : this.index -1
+        return [this.activeFile, this.index]
+    }
+
+    get currentIndex() {
+        return this.index
+    }
+
+    get activeFile() {
+        return this.assets[this.index]
+    }
+}
+
+
+const setup = (resultBody, assets) => {
+    if (!assets.length) {
+        resultBody.querySelector('.media').classList.add('hidden')
+        return
+    }
+
+    const mediaViewer = new MediaViewer(assets)
+    const container = resultBody.querySelector('.media-container')
+    const leftArrow = resultBody.querySelector('.media-container__nav--left')
+    const rightArrow = resultBody.querySelector('.media-container__nav--right')
+    const mediaName = resultBody.querySelector('.media__name')
+    const counter = resultBody.querySelector('.media__counter')
+    const imageEl = resultBody.querySelector('img')
+    const sourceEl = resultBody.querySelector('source')
+    const videoEl = resultBody.querySelector('video')
+
+    const setImg = (media, index) => {
+        if (media?.format_type === 'image') {
+            imageEl.src = media.path
+
+            imageEl.classList.remove('hidden')
+            videoEl.classList.add('hidden')
+        } else if (media?.format_type === 'video') {
+            sourceEl.src = media.path
+
+            videoEl.classList.remove('hidden')
+            imageEl.classList.add('hidden')
+        }
+
+        mediaName.innerText = media?.name
+        counter.innerText = `${index + 1} / ${assets.length}`
+    }
+    setImg(mediaViewer.activeFile, mediaViewer.currentIndex)
+
+    const moveLeft = () => {
+        const [media, index] = mediaViewer.prevActive()
+        setImg(media, index)
+    }
+    const doRight = () => {
+        const [media, index] = mediaViewer.nextActive()
+        setImg(media, index)
+    }
+    const openImg = () => {
+        window.open(mediaViewer.activeFile.path, '_blank')
+    }
+    if (assets.length === 1) {
+        container.classList.add('media-container--fullscreen')
+    } else {
+        leftArrow.addEventListener('click', moveLeft)
+        rightArrow.addEventListener('click', doRight)
+    }
+    imageEl.addEventListener('click', openImg)
+}
+
+module.exports = {
+    setup,
+}
+
+},{}],7:[function(require,module,exports){
+const { manager } = require('./datamanager.js')
+const storageModule = require('./storage.js')
+
+const genericSort = (list, key, ascending, customOrder) => {
+    let sorted
+    if (customOrder) {
+        sorted = list.sort((a, b) => {
+            const aValue = a.result.toLowerCase()
+            const bValue = b.result.toLowerCase()
+
+            const aIndex = customOrder.findIndex((item) => item.toLowerCase() === aValue)
+            const bIndex = customOrder.findIndex((item) => item.toLowerCase() === bValue)
+
+            // Compare the indices to determine the sort order
+            return aIndex - bIndex
+        })
+    } else {
+        sorted = list.sort((a, b) => a[key] === b[key] ? 0 : a[key] > b[key] ? 1 : -1)
+    }
+
+    if (ascending) {
+        sorted.reverse()
+    }
+    return sorted
+}
+
+const durationSort = (list, ascending) => {
+    const parseDuration = (duration) => {
+        if (duration.includes(':')) {
+            // If it's in the format "HH:mm:ss"
+            const [hours, minutes, seconds] = duration.split(':').map(Number)
+            return (hours * 3600 + minutes * 60 + seconds) * 1000
+        } else {
+            // If it's in the format "nnn ms"
+            return parseInt(duration)
+        }
+    }
+    const sorted = list.sort((a, b) => parseDuration(a['duration']) - parseDuration(b['duration']))
+    if (ascending) {
+        sorted.reverse()
+    }
+    return sorted
+}
+
+const doInitSort = () => {
+    const type = storageModule.getSort(manager.initialSort)
+    const ascending = storageModule.getSortDirection()
+    const list = manager.testSubset
+    const initialOrder = ['Error', 'Failed', 'Rerun', 'XFailed', 'XPassed', 'Skipped', 'Passed']
+
+    storageModule.setSort(type)
+    storageModule.setSortDirection(ascending)
+
+    if (type?.toLowerCase() === 'original') {
+        manager.setRender(list)
+    } else {
+        let sortedList
+        switch (type) {
+        case 'duration':
+            sortedList = durationSort(list, ascending)
+            break
+        case 'result':
+            sortedList = genericSort(list, type, ascending, initialOrder)
+            break
+        default:
+            sortedList = genericSort(list, type, ascending)
+            break
+        }
+        manager.setRender(sortedList)
+    }
+}
+
+const doSort = (type, skipDirection) => {
+    const newSortType = storageModule.getSort(manager.initialSort) !== type
+    const currentAsc = storageModule.getSortDirection()
+    let ascending
+    if (skipDirection) {
+        ascending = currentAsc
+    } else {
+        ascending = newSortType ? false : !currentAsc
+    }
+    storageModule.setSort(type)
+    storageModule.setSortDirection(ascending)
+
+    const list = manager.testSubset
+    const sortedList = type === 'duration' ? durationSort(list, ascending) : genericSort(list, type, ascending)
+    manager.setRender(sortedList)
+}
+
+module.exports = {
+    doInitSort,
+    doSort,
+}
+
+},{"./datamanager.js":1,"./storage.js":8}],8:[function(require,module,exports){
+const possibleFilters = [
+    'passed',
+    'skipped',
+    'failed',
+    'error',
+    'xfailed',
+    'xpassed',
+    'rerun',
+]
+
+const getVisible = () => {
+    const url = new URL(window.location.href)
+    const settings = new URLSearchParams(url.search).get('visible')
+    const lower = (item) => {
+        const lowerItem = item.toLowerCase()
+        if (possibleFilters.includes(lowerItem)) {
+            return lowerItem
+        }
+        return null
+    }
+    return settings === null ?
+        possibleFilters :
+        [...new Set(settings?.split(',').map(lower).filter((item) => item))]
+}
+
+const hideCategory = (categoryToHide) => {
+    const url = new URL(window.location.href)
+    const visibleParams = new URLSearchParams(url.search).get('visible')
+    const currentVisible = visibleParams ? visibleParams.split(',') : [...possibleFilters]
+    const settings = [...new Set(currentVisible)].filter((f) => f !== categoryToHide).join(',')
+
+    url.searchParams.set('visible', settings)
+    window.history.pushState({}, null, unescape(url.href))
+}
+
+const showCategory = (categoryToShow) => {
+    if (typeof window === 'undefined') {
+        return
+    }
+    const url = new URL(window.location.href)
+    const currentVisible = new URLSearchParams(url.search).get('visible')?.split(',').filter(Boolean) ||
+        [...possibleFilters]
+    const settings = [...new Set([categoryToShow, ...currentVisible])]
+    const noFilter = possibleFilters.length === settings.length || !settings.length
+
+    noFilter ? url.searchParams.delete('visible') : url.searchParams.set('visible', settings.join(','))
+    window.history.pushState({}, null, unescape(url.href))
+}
+
+const getSort = (initialSort) => {
+    const url = new URL(window.location.href)
+    let sort = new URLSearchParams(url.search).get('sort')
+    if (!sort) {
+        sort = initialSort || 'result'
+    }
+    return sort
+}
+
+const setSort = (type) => {
+    const url = new URL(window.location.href)
+    url.searchParams.set('sort', type)
+    window.history.pushState({}, null, unescape(url.href))
+}
+
+const getCollapsedCategory = (renderCollapsed) => {
+    let categories
+    if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href)
+        const collapsedItems = new URLSearchParams(url.search).get('collapsed')
+        switch (true) {
+        case !renderCollapsed && collapsedItems === null:
+            categories = ['passed']
+            break
+        case collapsedItems?.length === 0 || /^["']{2}$/.test(collapsedItems):
+            categories = []
+            break
+        case /^all$/.test(collapsedItems) || collapsedItems === null && /^all$/.test(renderCollapsed):
+            categories = [...possibleFilters]
+            break
+        default:
+            categories = collapsedItems?.split(',').map((item) => item.toLowerCase()) || renderCollapsed
+            break
+        }
+    } else {
+        categories = []
+    }
+    return categories
+}
+
+const getSortDirection = () => JSON.parse(sessionStorage.getItem('sortAsc')) || false
+const setSortDirection = (ascending) => sessionStorage.setItem('sortAsc', ascending)
+
+const getCollapsedIds = () => JSON.parse(sessionStorage.getItem('collapsedIds')) || []
+const setCollapsedIds = (list) => sessionStorage.setItem('collapsedIds', JSON.stringify(list))
+
+module.exports = {
+    getVisible,
+    hideCategory,
+    showCategory,
+    getCollapsedIds,
+    setCollapsedIds,
+    getSort,
+    setSort,
+    getSortDirection,
+    setSortDirection,
+    getCollapsedCategory,
+    possibleFilters,
+}
+
+},{}]},{},[4]);
+    </script>
+  </footer>
+  </body>
+</html>

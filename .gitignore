@@ -1,0 +1,33 @@
+# 本地环境变量与密钥配置
+.env
+.env.*
+!.env.example
+!.env.sample
+
+# 私钥与证书
+*.key
+*.pem
+*.p12
+*.pfx
+
+# 常见本地凭据文件
+credentials.json
+credentials.*.json
+secrets.json
+secrets.*.json
+config.local.*
+
+# Python 虚拟环境、字节码与工具缓存
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# 本地运行数据与评测缓存
+.rag_store/
+.deepeval/
+
+# 操作系统生成文件
+.DS_Store
