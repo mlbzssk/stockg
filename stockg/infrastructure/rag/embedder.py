@@ -1,4 +1,5 @@
 """向量化(Embedding)实现：本地 BGE-zh，缺依赖时回退轻量哈希 Embedder。"""
+
 from __future__ import annotations
 
 import hashlib

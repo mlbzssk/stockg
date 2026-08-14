@@ -2,12 +2,13 @@
 
 应用层只依赖这些抽象, 具体实现由 infrastructure 层提供并通过依赖注入传入。
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from typing import List
 
-from stockg.domain.entities import StockSnapshot, Document, Chunk, RetrievedContext
+from stockg.domain.entities import Chunk, Document, RetrievedContext, StockSnapshot
 
 
 class StockDataRepository(ABC):
@@ -17,8 +18,10 @@ class StockDataRepository(ABC):
     def fetch_snapshot(self, symbol: str) -> StockSnapshot:
         """抓取指定代码的实时行情 + 新闻快照。"""
         ...
+
     async def fetch_snapshot_async(self, symbol: str) -> StockSnapshot:
         import asyncio
+
         return await asyncio.to_thread(self.fetch_snapshot, symbol)
 
 
@@ -29,8 +32,7 @@ class DocumentLoader(ABC):
     """加载原始文档（PDF / 文本）为纯文本。"""
 
     @abstractmethod
-    def load(self, path: str) -> Document:
-        ...
+    def load(self, path: str) -> Document: ...
 
 
 class TextSplitter(ABC):
@@ -39,21 +41,18 @@ class TextSplitter(ABC):
     @abstractmethod
     def split(
         self, doc: Document, chunk_size: int = 400, chunk_overlap: int = 50
-    ) -> List[Chunk]:
-        ...
+    ) -> List[Chunk]: ...
 
 
 class Embedder(ABC):
     """文本向量化。"""
 
     @abstractmethod
-    def embed(self, texts: List[str]) -> List[List[float]]:
-        ...
+    def embed(self, texts: List[str]) -> List[List[float]]: ...
 
     @property
     @abstractmethod
-    def dim(self) -> int:
-        ...
+    def dim(self) -> int: ...
 
     @property
     def name(self) -> str:
@@ -64,22 +63,17 @@ class VectorStore(ABC):
     """向量库的抽象：写入块、按向量召回、统计数量。"""
 
     @abstractmethod
-    def add(self, chunks: List[Chunk], model_name: str) -> None:
-        ...
+    def add(self, chunks: List[Chunk], model_name: str) -> None: ...
 
     @abstractmethod
-    def search(self, query_vec: List[float], top_k: int) -> List[RetrievedContext]:
-        ...
+    def search(self, query_vec: List[float], top_k: int) -> List[RetrievedContext]: ...
 
     @abstractmethod
-    def count(self) -> int:
-        ...
+    def count(self) -> int: ...
 
 
 class Retriever(ABC):
     """对外提供「自然语言查询 -> 相关上下文」的检索能力。"""
 
     @abstractmethod
-    def retrieve(self, query: str, top_k: int = 3) -> List[RetrievedContext]:
-        ...
-
+    def retrieve(self, query: str, top_k: int = 3) -> List[RetrievedContext]: ...

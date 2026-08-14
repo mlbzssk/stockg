@@ -7,6 +7,7 @@
 生产环境多实例部署时, 把 SessionStore 换成 Redis 后端即可,
 接口不变; 也可后续接入 LangGraph Checkpointer 作为等价替代。
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -22,6 +23,7 @@ from stockg.domain.cost import CostTracker
 @dataclass
 class SessionContext:
     """单次会话的全部可变状态, 按 thread_id 隔离。"""
+
     thread_id: str
     messages: list[dict[str, Any]] = field(default_factory=list)
     snapshot_cache: dict[tuple[str, str], Any] = field(default_factory=dict)
@@ -58,7 +60,8 @@ class SessionStore:
     def _gc(self) -> None:
         now = time.time()
         expired = [
-            tid for tid, ctx in self._sessions.items()
+            tid
+            for tid, ctx in self._sessions.items()
             if now - ctx.last_active > self._ttl_seconds
         ]
         for tid in expired:

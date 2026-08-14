@@ -399,15 +399,20 @@ async def run_industrial_agent_async(
 
             elif func_name == "research_stock":
                 from stockg.domain.research_agent import run_research_agent_async
-                market = func_args.get("market")
+
+                resolved_market = resolve_market(
+                    market,
+                    func_args["ticker"],
+                    func_args.get("market"),
+                )
                 logger.info(
                     "异步 Agent 调用资料检索: session_id=%s ticker=%s market=%s",
                     ctx.thread_id,
                     func_args["ticker"],
-                    market,
+                    resolved_market,
                 )
                 result = await run_research_agent_async(
-                    func_args["ticker"], market=market
+                    func_args["ticker"], market=resolved_market
                 )
             elif func_name == "get_stock_info":
                 logger.info(

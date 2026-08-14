@@ -1,13 +1,13 @@
 # stockg
 
-基于实时行情、新闻、本地知识库与 DeepSeek 的 A 股 / 美股分析 Agent。项目提供 CLI 与 FastAPI 两种入口，可输出结构化的「买入 / 观望 / 卖出」评级、分析理由、检索上下文及模型成本估算。
+基于实时行情、新闻、本地知识库与 DeepSeek 的 A 股 / 美股分析 Agent。项目提供 CLI 与 FastAPI 两种入口，可输出结构化的「买入 / 观望 / 卖出」评级、分析理由、工具调用上下文及模型成本估算。
 
 > **免责声明**：本项目仅用于技术研究与信息辅助，不构成投资建议，不保证数据实时性、完整性或准确性，也不提供自动交易能力。
 
 ## 核心能力
 
 - **双市场行情**：A 股通过新浪获取行情、失败时降级至东方财富；美股通过 Finnhub 获取行情与近 7 天新闻。
-- **多 Agent 分析**：主 Agent 调度资料收集 Agent，强制先获取行情、新闻和知识库资料，再提交结构化报告。
+- **多 Agent 分析**：主 Agent 调度资料收集 Agent，并通过系统提示要求先获取行情、新闻和知识库资料，再提交结构化报告。
 - **本地 RAG**：递归导入 PDF、Markdown、TXT，使用 `BAAI/bge-small-zh-v1.5` 向量化并持久化至 Chroma。
 - **同步与异步入口**：CLI 使用同步流程，HTTP API 使用异步流程并并发收集资料。
 - **多轮会话**：API 通过 `session_id` 复用上下文；会话保存在进程内，默认 1 小时过期。
@@ -68,11 +68,11 @@ pip install -e .
 cp .env.example .env
 ```
 
-至少需要配置 `DEEPSEEK_API_KEY`；分析美股时还需要 `FINNHUB_API_KEY`。`DEEPSEEK_BASE_URL`、`DEEPSEEK_MODEL`、`RAG_STORE_PATH` 和 `LOG_LEVEL` 均可按需调整；Langfuse 配置为可选项。
+至少需要配置 `DEEPSEEK_API_KEY`；获取真实美股行情和新闻时还需要 `FINNHUB_API_KEY`，未配置时流程会使用错误上下文降级继续。`DEEPSEEK_BASE_URL`、`DEEPSEEK_MODEL`、`RAG_STORE_PATH` 和 `LOG_LEVEL` 均可按需调整；Langfuse 配置为可选项。
 
 Shell、CI、容器或部署平台注入的环境变量优先级高于 `.env`，因此生产环境无需创建 `.env`。修改 `.env` 后需要重启应用。
 
-应用统一使用 Python 标准日志并输出到 stderr，格式包含时间、级别和模块名。默认级别为 `INFO`；排查 Agent 迭代、模型成本等细节时可临时设置 `LOG_LEVEL=DEBUG`。日志会记录会话 ID、市场、工具调用、重试、降级和成本摘要，但不会记录完整用户问题、会话消息或模型流式原文。Langfuse 继续用于模型与 Agent 链路追踪。
+应用统一使用 Python 标准日志并输出到 stderr，格式包含时间、级别和模块名。默认级别为 `INFO`；排查 Agent 迭代、模型成本等细节时可临时设置 `LOG_LEVEL=DEBUG`。本地日志会记录会话 ID、市场、工具调用、重试、降级和成本摘要，但不会记录完整用户问题、会话消息或模型流式原文。启用 Langfuse 后，远程追踪可能包含模型消息和工具输入输出，生产环境应按隐私要求配置采集及数据保留策略。
 
 > **安全提示**：不要提交真实 API Key。根目录 `.gitignore` 已忽略 `.env`、私钥、证书和常见本地凭据文件，`.env.example` 只包含占位符。生产环境应优先使用部署平台的密钥管理能力。如果源码中的旧凭据曾被提交、推送或共享，请立即在对应服务端轮换。
 
@@ -134,8 +134,7 @@ uv run stockg serve
 curl -X POST http://localhost:8000/chat \
   -H 'Content-Type: application/json' \
   -d '{
-    "message": "分析 AAPL 最近的表现并给出评级",
-    "market": "us"
+    "message": "分析 AAPL 最近的表现并给出评级"
   }'
 ```
 
@@ -160,12 +159,11 @@ curl -X POST http://localhost:8000/chat \
 ```json
 {
   "message": "再说明一下主要风险",
-  "market": "us",
   "session_id": "b4b79c67-..."
 }
 ```
 
-`market` 可取 `a`、`us`、`auto`。`auto` 会优先根据标准股票代码确定市场（六位 A 股代码走 A 股数据源，英文 ticker 走美股数据源），名称、代码或市场不明确时再结合股票搜索和 Agent 结果判断。显式传入 `a` 或 `us` 时，该值作为强制市场并具有最高优先级。
+`market` 是可选参数，默认值为 `auto`，通常无需传入。自动模式会优先根据标准股票代码确定市场（六位 A 股代码走 A 股数据源，英文 ticker 走美股数据源），名称、代码或市场不明确时再结合股票搜索和 Agent 结果判断。仅需强制指定市场时传入 `a` 或 `us`，显式值具有最高优先级。
 
 ## 单元测试
 
@@ -175,11 +173,11 @@ curl -X POST http://localhost:8000/chat \
 uv run pytest tests -q
 ```
 
-提交前建议同时执行语法、代码规范和完整测试检查：
+提交前建议同时执行语法、离线单元测试和代码规范检查。Ruff 已作为开发依赖锁定，lint 会检查关键 PEP 8 问题、未定义或未使用符号以及导入顺序：
 
 ```bash
-python -m compileall -q stockg
-uv run pytest
+uv run python -m compileall -q stockg
+uv run pytest tests
 uv run ruff check .
 uv run ruff format --check .
 ```
@@ -191,6 +189,7 @@ uv run ruff format --check .
 ```json
 {
   "id": "case-id",
+  "status": "success",
   "input": "用户问题",
   "rating": "观望",
   "reason": "分析理由",

@@ -2,6 +2,7 @@
 
 cli 间接依赖 RAG 重库, 懒加载避免 import 本包时拉起。
 """
+
 from importlib import import_module
 from typing import Any
 

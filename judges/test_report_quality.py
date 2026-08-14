@@ -1,13 +1,15 @@
 import json
-from math import e
+
 import pytest
 from deepeval import assert_test
 from deepeval.test_case import LLMTestCase
 from metrics import METRICS
 
+
 def load_cases(path="eval/cases.jsonl"):
     with open(path, encoding="utf-8") as f:
         return [json.loads(line) for line in f if line.strip()]
+
 
 CASES = load_cases()
 
@@ -26,4 +28,3 @@ def test_report_quality(case):
         if case.get("expect_fail"):
             pytest.xfail(f"[{case['id']}] failed: {e}")
         raise e
-    

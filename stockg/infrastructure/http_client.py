@@ -1,18 +1,25 @@
 """对 requests 的封装: 带退避重试的 GET-JSON。"""
+
 from __future__ import annotations
 
+import asyncio
 import logging
 import random
 import time
 
-import requests
-import asyncio
 import httpx
+import requests
 
 logger = logging.getLogger(__name__)
 
 
-def get_json(url: str, params: dict, max_retries: int = 6, sleep: float = 1.0, max_sleep: float = 30.0) -> dict:
+def get_json(
+    url: str,
+    params: dict,
+    max_retries: int = 6,
+    sleep: float = 1.0,
+    max_sleep: float = 30.0,
+) -> dict:
     """带指数退避重试的 GET-JSON。
 
     本机出口经 Whistle 代理, 东财接口经常偶发 502; 指数退避 + 随机抖动可规避限流,
@@ -53,10 +60,16 @@ def get_json(url: str, params: dict, max_retries: int = 6, sleep: float = 1.0, m
     raise RuntimeError(f"多次重试后仍无法获取 {url}：{last}")
 
 
-async def get_json_async(url: str, params: dict, max_retries: int = 6, sleep: float = 1.0, max_sleep: float = 30.0) -> dict:
+async def get_json_async(
+    url: str,
+    params: dict,
+    max_retries: int = 6,
+    sleep: float = 1.0,
+    max_sleep: float = 30.0,
+) -> dict:
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-        "Referer": "https://quote.eastmoney.com/",        
+        "Referer": "https://quote.eastmoney.com/",
     }
     last = None
     async with httpx.AsyncClient(timeout=15.0) as client:
@@ -88,4 +101,3 @@ async def get_json_async(url: str, params: dict, max_retries: int = 6, sleep: fl
                     last,
                 )
         raise RuntimeError(f"多次重试后仍无法获取 {url}：{last}")
-

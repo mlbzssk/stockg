@@ -1,24 +1,26 @@
 import json
 import logging
 from dataclasses import dataclass
+
 from openai import OpenAI
-from stockg.infrastructure import (
-    DEEPSEEK_API_KEY,
-    DEEPSEEK_BASE_URL
-)
+
+from stockg.infrastructure import DEEPSEEK_API_KEY, DEEPSEEK_BASE_URL
 
 logger = logging.getLogger("eval.judge")
 
 
 @dataclass
 class JudgeVerdict:
-    scores: dict[str, int]   # {"rating_consistency":4,"groundedness":5,"completeness":3,"compliance":5}
-    overall: float           # 四项均值
-    passed: bool             # overall >= threshold
-    reasoning: str           # 判官的 CoT 分析
-    issues: list[str]        # 具体问题点
+    scores: dict[
+        str, int
+    ]  # {"rating_consistency":4,"groundedness":5,"completeness":3,"compliance":5}
+    overall: float  # 四项均值
+    passed: bool  # overall >= threshold
+    reasoning: str  # 判官的 CoT 分析
+    issues: list[str]  # 具体问题点
 
-JUDGE_SYSTEM = '你是一个严苛的金融分析报告评审员，只输出JSON'
+
+JUDGE_SYSTEM = "你是一个严苛的金融分析报告评审员，只输出JSON"
 JUDGE_PROMPT = """请评审下面这份股票分析报告。
 【用户问题】
 {input}
@@ -71,24 +73,28 @@ JUDGE_PROMPT = """请评审下面这份股票分析报告。
 }}
 """
 
+
 class LLMJudge:
-    def __init__(self, model: str="deepseek-chat", threshold: float=3.5):
+    def __init__(self, model: str = "deepseek-chat", threshold: float = 3.5):
         self.model = model
         self.threshold = threshold
-        self.client = OpenAI(
-            api_key=DEEPSEEK_API_KEY,
-            base_url=DEEPSEEK_BASE_URL
+        self.client = OpenAI(api_key=DEEPSEEK_API_KEY, base_url=DEEPSEEK_BASE_URL)
+
+    def judge(
+        self, input: str, fetched_context: list[str], rating: str, reason: str
+    ) -> JudgeVerdict:
+        promopt = JUDGE_PROMPT.format(
+            input=input, fetched_context=fetched_context, rating=rating, reason=reason
         )
-    
-    def judge(self, input: str, fetched_context: list[str], rating: str, reason: str) -> JudgeVerdict:
-        promopt = JUDGE_PROMPT.format(input=input, fetched_context=fetched_context, rating=rating, reason=reason)
         for attempt in range(2):
             resp = self.client.chat.completions.create(
                 model=self.model,
-                messages=[{"role":"system", "content": JUDGE_SYSTEM},
-                {"role":"user", "content": promopt}],
+                messages=[
+                    {"role": "system", "content": JUDGE_SYSTEM},
+                    {"role": "user", "content": promopt},
+                ],
                 temperature=0,
-                response_format={"type": "json_object"}
+                response_format={"type": "json_object"},
             )
             raw = resp.choices[0].message.content
             try:
@@ -99,7 +105,16 @@ class LLMJudge:
                     logger.warning("Judge 返回的 JSON 解析失败，将重试")
                 else:
                     logger.error("Judge 返回的 JSON 再次解析失败，使用默认评分")
-                    data = {"reasoning": "JSON 解析失败", "scores": {"rating:consistency": 1.0, "groundedness": 1.0, "completeness": 1.0, "compliance": 1.0}, "issues": []}
+                    data = {
+                        "reasoning": "JSON 解析失败",
+                        "scores": {
+                            "rating:consistency": 1.0,
+                            "groundedness": 1.0,
+                            "completeness": 1.0,
+                            "compliance": 1.0,
+                        },
+                        "issues": [],
+                    }
         scores = {k: int(v) for k, v in data["scores"].items()}
         overall = sum(scores.values()) / len(scores)
         return JudgeVerdict(
@@ -107,6 +122,5 @@ class LLMJudge:
             overall=round(overall, 2),
             passed=overall >= self.threshold,
             reasoning=data.get("reasoning", ""),
-            issues=data.get("issues", [])
+            issues=data.get("issues", []),
         )
-

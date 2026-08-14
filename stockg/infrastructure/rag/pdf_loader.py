@@ -1,4 +1,5 @@
 """文档加载器：支持 PDF 与纯文本。"""
+
 from __future__ import annotations
 
 from pathlib import Path

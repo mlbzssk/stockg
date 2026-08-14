@@ -61,7 +61,7 @@ def _cmd_ingest(path: str) -> None:
     embedder = build_embedder()
     store = ChromaVectorStore(RAG_STORE_PATH)
     service = RagIngestionService(
-        loader=build_loader(path),
+        loader_factory=build_loader,
         splitter=RecursiveCharacterSplitter(),
         embedder=embedder,
         store=store,

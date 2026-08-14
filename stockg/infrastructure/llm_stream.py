@@ -1,8 +1,9 @@
 import asyncio
-from langchain_core.tools import tool
-from openai.types.chat.chat_completion import ChatCompletionMessage
 
-def stream_completion(client, *, model, messages, tools, tool_choice, max_tokens, on_text=None):
+
+def stream_completion(
+    client, *, model, messages, tools, tool_choice, max_tokens, on_text=None
+):
     stream = client.chat.completions.create(
         model=model,
         messages=messages,
@@ -28,7 +29,9 @@ def stream_completion(client, *, model, messages, tools, tool_choice, max_tokens
                 on_text(delta.content)
         if delta.tool_calls:
             for tool_call in delta.tool_calls:
-                slot = tool_call_parts.setdefault(tool_call.index, {"id": "", "name": "", "arguments": "" })
+                slot = tool_call_parts.setdefault(
+                    tool_call.index, {"id": "", "name": "", "arguments": ""}
+                )
                 if tool_call.id:
                     slot["id"] = tool_call.id
                 if tool_call.function and tool_call.function.name:
@@ -37,11 +40,14 @@ def stream_completion(client, *, model, messages, tools, tool_choice, max_tokens
                     slot["arguments"] += tool_call.function.arguments
     tool_calls = None
     if tool_call_parts:
-        tool_calls = [{
+        tool_calls = [
+            {
                 "id": v["id"],
                 "type": "function",
-                "function": {"name": v["name"], "arguments": v["arguments"]}
-            } for _, v in sorted(tool_call_parts.items())]
+                "function": {"name": v["name"], "arguments": v["arguments"]},
+            }
+            for _, v in sorted(tool_call_parts.items())
+        ]
     msg = {
         "role": "assistant",
         "content": "".join(content_parts) or None,
@@ -49,7 +55,10 @@ def stream_completion(client, *, model, messages, tools, tool_choice, max_tokens
     }
     return msg, usage, finish_reason
 
-async def stream_completion_async(client, *, model, messages, tools, tool_choice, max_tokens, on_text=None):
+
+async def stream_completion_async(
+    client, *, model, messages, tools, tool_choice, max_tokens, on_text=None
+):
     stream = await client.chat.completions.create(
         model=model,
         messages=messages,
@@ -76,7 +85,9 @@ async def stream_completion_async(client, *, model, messages, tools, tool_choice
                     await ret
         if delta.tool_calls:
             for tool_call in delta.tool_calls:
-                slot = tool_call_parts.setdefault(tool_call.index, {"id": "", "name": "", "arguments": "" })
+                slot = tool_call_parts.setdefault(
+                    tool_call.index, {"id": "", "name": "", "arguments": ""}
+                )
                 if tool_call.id:
                     slot["id"] = tool_call.id
                 if tool_call.function and tool_call.function.name:
@@ -85,15 +96,17 @@ async def stream_completion_async(client, *, model, messages, tools, tool_choice
                     slot["arguments"] += tool_call.function.arguments
     tool_calls = None
     if tool_call_parts:
-        tool_calls = [{
+        tool_calls = [
+            {
                 "id": v["id"],
                 "type": "function",
-                "function": {"name": v["name"], "arguments": v["arguments"]}
-            } for _, v in sorted(tool_call_parts.items())]
+                "function": {"name": v["name"], "arguments": v["arguments"]},
+            }
+            for _, v in sorted(tool_call_parts.items())
+        ]
     msg = {
         "role": "assistant",
         "content": "".join(content_parts) or None,
         "tool_calls": tool_calls,
     }
     return msg, usage, finish_reason
-

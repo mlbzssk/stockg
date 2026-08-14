@@ -6,7 +6,11 @@ from stockg.domain import Document, RetrievedContext
 from stockg.infrastructure.rag import embedder as embedder_module
 from stockg.infrastructure.rag.chunker import RecursiveCharacterSplitter
 from stockg.infrastructure.rag.embedder import FallbackEmbedder, build_embedder
-from stockg.infrastructure.rag.pdf_loader import PyPdfLoader, TextFileLoader, build_loader
+from stockg.infrastructure.rag.pdf_loader import (
+    PyPdfLoader,
+    TextFileLoader,
+    build_loader,
+)
 from stockg.infrastructure.rag.retriever import SimpleRetriever
 
 
@@ -127,7 +131,13 @@ def test_text_file_loader_reads_utf8_and_strips_outer_whitespace(tmp_path) -> No
 
 @pytest.mark.parametrize(
     ("path", "expected_type"),
-    [("REPORT.PDF", PyPdfLoader), ("notes.md", TextFileLoader), ("data.txt", TextFileLoader)],
+    [
+        ("REPORT.PDF", PyPdfLoader),
+        ("notes.md", TextFileLoader),
+        ("data.txt", TextFileLoader),
+    ],
 )
-def test_build_loader_selects_by_case_insensitive_suffix(path: str, expected_type: type) -> None:
+def test_build_loader_selects_by_case_insensitive_suffix(
+    path: str, expected_type: type
+) -> None:
     assert isinstance(build_loader(path), expected_type)
