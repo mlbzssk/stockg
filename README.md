@@ -167,6 +167,23 @@ curl -X POST http://localhost:8000/chat \
 
 `market` 可取 `a`、`us`、`auto`。`auto` 会优先根据标准股票代码确定市场（六位 A 股代码走 A 股数据源，英文 ticker 走美股数据源），名称、代码或市场不明确时再结合股票搜索和 Agent 结果判断。显式传入 `a` 或 `us` 时，该值作为强制市场并具有最高优先级。
 
+## 单元测试
+
+单元测试位于 `tests/`，覆盖领域实体、成本预算、会话隔离、市场识别、RAG 入库与检索、Research Agent、主 Agent、数据仓储降级、HTTP 重试、模型流式响应及 FastAPI 接口。测试通过 fake、mock 和临时目录隔离外部模型、网络、向量库与文件系统，不需要配置 API Key，也不会发起真实外部请求。
+
+```bash
+uv run pytest tests -q
+```
+
+提交前建议同时执行语法、代码规范和完整测试检查：
+
+```bash
+python -m compileall -q stockg
+uv run pytest
+uv run ruff check .
+uv run ruff format --check .
+```
+
 ## 评测
 
 评测依赖 DeepSeek，会产生模型调用费用。样例位于 `eval/cases.jsonl`，每行一个 JSON 对象，核心字段如下：

@@ -32,14 +32,17 @@ class RecursiveCharacterSplitter(TextSplitter):
             if sep == "":
                 # 按字符硬切
                 return [part[i : i + chunk_size] for i in range(0, len(part), chunk_size)]
+            if sep not in part:
+                return _recursive_split(part, seps[1:])
             segments = part.split(sep)
             merged: list[str] = []
             current = ""
-            for seg in segments:
-                candidate = current + seg + sep if current else seg + sep
+            for index, seg in enumerate(segments):
+                suffix = sep if index < len(segments) - 1 else ""
+                candidate = current + seg + suffix if current else seg + suffix
                 if len(candidate) > chunk_size and current:
                     merged.extend(_recursive_split(current, seps[1:]))
-                    current = seg + sep
+                    current = seg + suffix
                 else:
                     current = candidate
             if current:
