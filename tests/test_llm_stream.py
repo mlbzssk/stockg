@@ -19,7 +19,9 @@ def _chunk(
     return SimpleNamespace(usage=usage, choices=[choice] if has_choice else [])
 
 
-def _tool_delta(index: int, call_id: str | None, name: str | None, arguments: str | None):
+def _tool_delta(
+    index: int, call_id: str | None, name: str | None, arguments: str | None
+):
     function = SimpleNamespace(name=name, arguments=arguments)
     return SimpleNamespace(index=index, id=call_id, function=function)
 
@@ -61,7 +63,9 @@ def test_stream_completion_reassembles_text_tools_and_usage() -> None:
     chunks = [
         _chunk(content="分析"),
         _chunk(
-            tool_calls=[_tool_delta(0, "call-1", "submit_final_report", '{"investment_')]
+            tool_calls=[
+                _tool_delta(0, "call-1", "submit_final_report", '{"investment_')
+            ]
         ),
         _chunk(
             tool_calls=[_tool_delta(0, None, None, 'rating":"观望"}')],

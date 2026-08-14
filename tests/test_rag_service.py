@@ -6,7 +6,12 @@ from stockg.domain import Chunk, Document, RetrievedContext
 
 class FakeLoader:
     def __init__(self) -> None:
+        self.selected_paths: list[str] = []
         self.loaded_paths: list[str] = []
+
+    def select(self, path: str) -> "FakeLoader":
+        self.selected_paths.append(path)
+        return self
 
     def load(self, path: str) -> Document:
         self.loaded_paths.append(path)
@@ -71,7 +76,7 @@ def _build_service() -> tuple[
     splitter = FakeSplitter()
     embedder = FakeEmbedder()
     store = FakeStore()
-    service = RagIngestionService(loader, splitter, embedder, store)
+    service = RagIngestionService(loader.select, splitter, embedder, store)
     return service, loader, splitter, embedder, store
 
 
@@ -104,7 +109,9 @@ def test_ingest_path_recurses_supported_files_in_sorted_order(tmp_path) -> None:
     count = service.ingest_path(str(tmp_path), chunk_size=80, chunk_overlap=8)
 
     assert count == 6
-    assert [Path(path).name for path in loader.loaded_paths] == ["a.md", "b.txt", "c.pdf"]
+    expected_names = ["a.md", "b.txt", "c.pdf"]
+    assert [Path(path).name for path in loader.selected_paths] == expected_names
+    assert [Path(path).name for path in loader.loaded_paths] == expected_names
     assert len(store.added) == 3
 
 

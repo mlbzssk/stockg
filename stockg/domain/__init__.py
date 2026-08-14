@@ -2,6 +2,7 @@
 
 对外统一从 ``stockg.domain`` 导入, 无需感知内部模块名。
 """
+
 from importlib import import_module
 from typing import Any
 
@@ -58,5 +59,5 @@ __all__ = [
     "run_industrial_agent",
     "run_research_agent",
     "run_industrial_agent_async",
-    "run_research_agent_async"
+    "run_research_agent_async",
 ]

@@ -1,11 +1,12 @@
 """美股行情仓储：基于 Finnhub 实现 StockDataRepository 端口。"""
+
 from __future__ import annotations
 
 import json
 import logging
+import urllib.request
 from datetime import date, timedelta
 from urllib.parse import urlencode
-import urllib.request
 
 from stockg.domain import StockDataRepository, StockSnapshot
 from stockg.infrastructure.config import FINNHUB_API_KEY
@@ -41,33 +42,45 @@ class FinnhubStockRepository(StockDataRepository):
         except Exception as exc:  # noqa: BLE001 - 行情失败要降级
             logger.warning("Finnhub 行情获取失败: symbol=%s error=%s", symbol, exc)
             return StockSnapshot(
-                symbol=symbol, name=symbol, price=0.0, change_pct=0.0,
+                symbol=symbol,
+                name=symbol,
+                price=0.0,
+                change_pct=0.0,
                 news=[f"行情获取失败: {exc}"],
             )
 
         if not price:
             return StockSnapshot(
-                symbol=symbol, name=symbol, price=0.0, change_pct=0.0,
+                symbol=symbol,
+                name=symbol,
+                price=0.0,
+                change_pct=0.0,
                 news=[f"{symbol} 暂无行情数据(可能代码无效或未开盘)"],
             )
 
         try:
             today = date.today()
             week_ago = today - timedelta(days=7)
-            news = _finnhub_get(
-                "company-news",
-                {
-                    "symbol": symbol,
-                    "from": week_ago.isoformat(),
-                    "to": today.isoformat(),
-                },
-            ) or []
+            news = (
+                _finnhub_get(
+                    "company-news",
+                    {
+                        "symbol": symbol,
+                        "from": week_ago.isoformat(),
+                        "to": today.isoformat(),
+                    },
+                )
+                or []
+            )
             titles = [n.get("headline", "") for n in news][:15]
         except Exception as exc:  # noqa: BLE001 - 新闻非关键, 失败降级
             logger.warning("Finnhub 新闻获取失败: symbol=%s error=%s", symbol, exc)
             titles = [f"新闻获取失败: {exc}"]
 
         return StockSnapshot(
-            symbol=symbol, name=symbol,
-            price=float(price), change_pct=float(change_pct), news=titles,
+            symbol=symbol,
+            name=symbol,
+            price=float(price),
+            change_pct=float(change_pct),
+            news=titles,
         )

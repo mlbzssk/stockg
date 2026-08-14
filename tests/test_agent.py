@@ -1,10 +1,11 @@
+import asyncio
 import contextvars
 import json
 from types import SimpleNamespace
 
 import pytest
 
-from stockg.domain import agent
+from stockg.domain import agent, research_agent
 from stockg.domain import session as session_module
 from stockg.domain.session import SessionStore, get_current_session
 
@@ -13,7 +14,10 @@ def _tool_call(name: str, arguments: dict, call_id: str = "call-1") -> dict:
     return {
         "id": call_id,
         "type": "function",
-        "function": {"name": name, "arguments": json.dumps(arguments, ensure_ascii=False)},
+        "function": {
+            "name": name,
+            "arguments": json.dumps(arguments, ensure_ascii=False),
+        },
     }
 
 
@@ -79,7 +83,9 @@ def test_industrial_agent_returns_structured_final_report(
     assert result.status == "success"
     assert result.rating == "观望"
     assert result.reason == "估值合理"
-    assert result.fetched_context == ["[submit_final_report 已提交最终报告。评级: 观望]"]
+    assert result.fetched_context == [
+        "[submit_final_report 已提交最终报告。评级: 观望]"
+    ]
     assert result.cost == {"tool_tokens": 15, "cost_yuan": 0.0001}
     assert calls[0]["tool_choice"] == "auto"
     assert calls[0]["messages"][0]["role"] == "system"
@@ -118,6 +124,60 @@ def test_industrial_agent_returns_failed_result_after_length_truncation(
     assert messages[-1]["content"] == "输出过长被截断，请直接调用工具，不要输出长文本。"
 
 
+def test_async_agent_preserves_explicit_market_priority(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    store = SessionStore()
+    monkeypatch.setattr(session_module, "session_store", store)
+    monkeypatch.setattr(agent, "_get_async_client", lambda: object())
+    stream_calls = 0
+    research_calls: list[tuple[str, str]] = []
+
+    async def fake_stream(client, **kwargs):
+        nonlocal stream_calls
+        stream_calls += 1
+        if stream_calls == 1:
+            tool_calls = [
+                _tool_call(
+                    "research_stock",
+                    {"ticker": "AAPL", "market": "us"},
+                    call_id="research-1",
+                )
+            ]
+        else:
+            tool_calls = [
+                _tool_call(
+                    "submit_final_report",
+                    {"investment_rating": "观望", "analysis_reason": "测试完成"},
+                    call_id="report-1",
+                )
+            ]
+        return (
+            {"role": "assistant", "content": None, "tool_calls": tool_calls},
+            _usage(),
+            "tool_calls",
+        )
+
+    async def fake_research(ticker: str, market: str) -> str:
+        research_calls.append((ticker, market))
+        return "资料"
+
+    monkeypatch.setattr(agent, "stream_completion_async", fake_stream)
+    monkeypatch.setattr(research_agent, "run_research_agent_async", fake_research)
+
+    result = asyncio.run(
+        agent.run_industrial_agent_async(
+            "分析 AAPL",
+            thread_id="async-market-priority",
+            market="a",
+            max_iterations=2,
+        )
+    )
+
+    assert result.status == "success"
+    assert research_calls == [("AAPL", "a")]
+
+
 def test_industrial_agent_rejects_invalid_market_before_model_call() -> None:
     with pytest.raises(ValueError, match="market 必须是 a、us 或 auto"):
         agent.run_industrial_agent("分析", market="hk")
@@ -144,7 +204,9 @@ def test_get_stock_info_formats_supported_markets_and_skips_other_types(
 
     result = agent.get_stock_info("科技")
 
-    assert result == "找到:贵州茅台(600519), A股|Apple(AAPL), 美股|腾讯控股(00700), 港股"
+    assert (
+        result == "找到:贵州茅台(600519), A股|Apple(AAPL), 美股|腾讯控股(00700), 港股"
+    )
 
 
 def test_get_stock_info_returns_readable_message_when_no_match(
@@ -155,4 +217,6 @@ def test_get_stock_info_returns_readable_message_when_no_match(
 
     monkeypatch.setattr(requests, "get", lambda *args, **kwargs: response)
 
-    assert agent.get_stock_info("missing") == "未找到匹配'missing'的股票，请确认名称或代码"
+    assert (
+        agent.get_stock_info("missing") == "未找到匹配'missing'的股票，请确认名称或代码"
+    )

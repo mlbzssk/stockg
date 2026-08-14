@@ -1,7 +1,9 @@
 """应用服务: 编排 RAG 的「入库」与「检索」用例。"""
+
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Callable
 
 from stockg.domain import (
     DocumentLoader,
@@ -18,12 +20,12 @@ class RagIngestionService:
 
     def __init__(
         self,
-        loader: DocumentLoader,
+        loader_factory: Callable[[str], DocumentLoader],
         splitter: TextSplitter,
         embedder: Embedder,
         store: VectorStore,
     ) -> None:
-        self._loader = loader
+        self._loader_factory = loader_factory
         self._splitter = splitter
         self._embedder = embedder
         self._store = store
@@ -31,7 +33,8 @@ class RagIngestionService:
     def ingest_file(
         self, path: str, chunk_size: int = 400, chunk_overlap: int = 50
     ) -> int:
-        doc = self._loader.load(path)
+        loader = self._loader_factory(path)
+        doc = loader.load(path)
         chunks = self._splitter.split(doc, chunk_size, chunk_overlap)
         texts = [c.text for c in chunks]
         vectors = self._embedder.embed(texts)

@@ -3,6 +3,7 @@
 对外统一从 ``stockg.infrastructure`` 导入; 仓储实现依赖 akshare 等重库,
 通过模块级 ``__getattr__`` 懒加载, 避免 import 本包时拉起重型依赖。
 """
+
 from importlib import import_module
 from typing import Any
 

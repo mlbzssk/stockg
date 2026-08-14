@@ -20,7 +20,9 @@ def test_sina_quote_parser_calculates_change_percentage(
         text='var hq_str_sh600519="贵州茅台,100.00,0,105.00,0";',
         encoding=None,
     )
-    monkeypatch.setattr(akshare_repository.requests, "get", lambda *args, **kwargs: response)
+    monkeypatch.setattr(
+        akshare_repository.requests, "get", lambda *args, **kwargs: response
+    )
 
     result = akshare_repository.AkshareStockRepository()._fetch_from_sina("600519")
 
@@ -32,7 +34,9 @@ def test_sina_quote_parser_rejects_empty_payload(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     response = SimpleNamespace(text='var hq_str_sh600519="";', encoding=None)
-    monkeypatch.setattr(akshare_repository.requests, "get", lambda *args, **kwargs: response)
+    monkeypatch.setattr(
+        akshare_repository.requests, "get", lambda *args, **kwargs: response
+    )
 
     with pytest.raises(RuntimeError, match="未返回 600519"):
         akshare_repository.AkshareStockRepository()._fetch_from_sina("600519")

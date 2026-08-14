@@ -13,7 +13,7 @@ from stockg.logging_config import configure_logging
 configure_logging()
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="stovkg", description="A股/美股智能分析 Agent")
+app = FastAPI(title="stockg", description="A股/美股智能分析 Agent")
 
 
 class ChatRequest(BaseModel):
@@ -22,15 +22,19 @@ class ChatRequest(BaseModel):
         default="auto",
         description="auto 表示根据用户问题和股票搜索结果自动识别；a/us 表示强制指定市场",
     )
-    session_id: str | None = Field(default=None, description="会话 ID; 省略则开新会话, 传入同一 id 可多轮对话")
+    session_id: str | None = Field(
+        default=None, description="会话 ID; 省略则开新会话, 传入同一 id 可多轮对话"
+    )
+
 
 class ChatResponse(BaseModel):
     status: str
-    session_id: str              # 回传 session_id, 前端下次请求带上即可多轮
-    message: str                 # Agent 的自然语言回复（即 reason）
-    rating: str | None = None    # 评级，如果识别到了
+    session_id: str  # 回传 session_id, 前端下次请求带上即可多轮
+    message: str  # Agent 的自然语言回复（即 reason）
+    rating: str | None = None  # 评级，如果识别到了
     fetched_context: list[str]
     cost: dict
+
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat(req: ChatRequest) -> ChatResponse:
@@ -61,8 +65,9 @@ async def chat(req: ChatRequest) -> ChatResponse:
         message=result.reason,
         rating=result.rating,
         fetched_context=result.fetched_context,
-        cost=result.cost
+        cost=result.cost,
     )
+
 
 @app.get("/health")
 def health():

@@ -1,4 +1,3 @@
-
 import json
 import logging
 
@@ -8,10 +7,10 @@ from stockg.logging_config import configure_logging
 logger = logging.getLogger("eval.run_eval")
 
 
-
 def load_cases(path="eval/cases.jsonl"):
     with open(path, "r") as f:
         return [json.loads(line) for line in f if line.strip()]
+
 
 def main():
     configure_logging()
@@ -19,8 +18,9 @@ def main():
     cases = load_cases()
     results = []
     for c in cases:
-        if c.get("status", "unkown") != "success":
-            logger.info("跳过评测用例: case_id=%s status=%s", c["id"], c.get("status"))
+        status = c.get("status", "success")
+        if status != "success":
+            logger.info("跳过评测用例: case_id=%s status=%s", c["id"], status)
             continue
         v = judge.judge(c["input"], c["fetched_context"], c["rating"], c["reason"])
         results.append((c["id"], v))

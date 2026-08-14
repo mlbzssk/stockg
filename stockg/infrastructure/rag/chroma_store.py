@@ -1,4 +1,5 @@
 """向量库：基于 Chroma 的持久化实现（HNSW + 余弦相似度）。"""
+
 from __future__ import annotations
 
 from pathlib import Path

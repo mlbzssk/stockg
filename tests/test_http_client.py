@@ -25,11 +25,15 @@ def test_get_json_retries_non_json_response_then_succeeds(
         ]
     )
     sleeps: list[float] = []
-    monkeypatch.setattr(http_client.requests, "get", lambda *args, **kwargs: next(responses))
+    monkeypatch.setattr(
+        http_client.requests, "get", lambda *args, **kwargs: next(responses)
+    )
     monkeypatch.setattr(http_client.random, "uniform", lambda start, end: 0.0)
     monkeypatch.setattr(http_client.time, "sleep", sleeps.append)
 
-    result = http_client.get_json("https://example.com", {"q": "stock"}, max_retries=2, sleep=2)
+    result = http_client.get_json(
+        "https://example.com", {"q": "stock"}, max_retries=2, sleep=2
+    )
 
     assert result == {"ok": True}
     assert sleeps == [1.0]

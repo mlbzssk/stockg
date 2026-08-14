@@ -1,17 +1,17 @@
 """股票数据仓储的具体实现: 新浪(主) + 东财(降级) 双数据源。"""
+
 from __future__ import annotations
 
+import asyncio
 import logging
 import re
 
 import akshare as ak
-import requests
-import asyncio
 import httpx
+import requests
 
 from stockg.domain import StockDataRepository, StockSnapshot
-from stockg.infrastructure.http_client import get_json
-from stockg.infrastructure.http_client import get_json_async
+from stockg.infrastructure.http_client import get_json, get_json_async
 
 logger = logging.getLogger(__name__)
 
@@ -91,9 +91,11 @@ class AkshareStockRepository(StockDataRepository):
         name = fields[0]
         yesterday_close = float(fields[1])
         current_price = float(fields[3])
-        change_pct = round(
-            (current_price - yesterday_close) / yesterday_close * 100, 2
-        ) if yesterday_close else 0.0
+        change_pct = (
+            round((current_price - yesterday_close) / yesterday_close * 100, 2)
+            if yesterday_close
+            else 0.0
+        )
         return name, current_price, change_pct
 
     def _fetch_news(self, symbol: str, name: str) -> list[str]:
@@ -156,8 +158,12 @@ class AkshareStockRepository(StockDataRepository):
         articles = data.get("result", {}).get("cmsArticleWebOld", [])
         titles = [a["title"] for a in articles if "title" in a]
         # 去掉 HTML 高亮标签 <em>...</em>
-        return [re.sub(r"<[^>]+>", "", t) for t in titles] if titles else ["未能成功抓取新闻"]
-    
+        return (
+            [re.sub(r"<[^>]+>", "", t) for t in titles]
+            if titles
+            else ["未能成功抓取新闻"]
+        )
+
     async def fetch_snapshot_async(self, symbol: str) -> StockSnapshot:
         """异步抓取股票快照."""
         price_task = asyncio.create_task(self._fetch_price_async(symbol))
@@ -171,7 +177,7 @@ class AkshareStockRepository(StockDataRepository):
             change_pct=change_pct,
             news=news_titles,
         )
-    
+
     async def _fetch_price_async(self, symbol: str) -> tuple[str, float, float]:
         """异步抓取股票价格."""
         try:
@@ -183,15 +189,22 @@ class AkshareStockRepository(StockDataRepository):
                 e,
             )
             return await self._fetch_from_eastmoney_async(symbol)
-    
-    async def _fetch_from_eastmoney_async(self, symbol: str) -> tuple[str, float, float]:
+
+    async def _fetch_from_eastmoney_async(
+        self, symbol: str
+    ) -> tuple[str, float, float]:
         """异步抓取股票价格."""
         secid = _to_secid(symbol)
         url = "https://push2.eastmoney.com/api/qt/stock/get"
-        params = {"secid": secid, "fields": "f43,f57,f58,f169", "invt": "2", "fltt": "2"}
+        params = {
+            "secid": secid,
+            "fields": "f43,f57,f58,f169",
+            "invt": "2",
+            "fltt": "2",
+        }
         data = (await get_json_async(url, params, max_retries=3))["data"]
         return data["f58"], float(data["f43"]), float(data["f169"])
-    
+
     async def _fetch_from_sina_async(self, symbol: str) -> tuple[str, float, float]:
         """异步抓取股票价格."""
         prefix = _to_sina_prefix(symbol)
@@ -210,9 +223,11 @@ class AkshareStockRepository(StockDataRepository):
         name = fields[0]
         yesterday_close = float(fields[1])
         current_price = float(fields[3])
-        change_pct = round(
-            (current_price - yesterday_close) / yesterday_close * 100, 2
-        ) if yesterday_close else 0.0
+        change_pct = (
+            round((current_price - yesterday_close) / yesterday_close * 100, 2)
+            if yesterday_close
+            else 0.0
+        )
         return name, current_price, change_pct
 
     async def _fetch_news_async(self, symbol: str) -> list[str]:
@@ -239,6 +254,7 @@ class AkshareStockRepository(StockDataRepository):
 
     async def _fetch_news_from_eastmoney_search_async(self, symbol: str) -> list[str]:
         import json as _json
+
         url = "https://search-api-web.eastmoney.com/search/jsonp"
         # 注意：原方法用 name 作 keyword，async 路径改成 symbol（避免依赖行情结果）
         param = {
@@ -260,7 +276,10 @@ class AkshareStockRepository(StockDataRepository):
         async with httpx.AsyncClient(timeout=10.0) as client:
             r = await client.get(
                 url,
-                params={"cb": "jQuery", "param": _json.dumps(param, ensure_ascii=False)},
+                params={
+                    "cb": "jQuery",
+                    "param": _json.dumps(param, ensure_ascii=False),
+                },
                 headers={"User-Agent": "Mozilla/5.0"},
             )
         text = r.text
@@ -269,4 +288,8 @@ class AkshareStockRepository(StockDataRepository):
         data = _json.loads(text[start:end])
         articles = data.get("result", {}).get("cmsArticleWebOld", [])
         titles = [a["title"] for a in articles if "title" in a]
-        return [re.sub(r"<[^>]+>", "", t) for t in titles] if titles else ["未能成功抓取新闻"]
+        return (
+            [re.sub(r"<[^>]+>", "", t) for t in titles]
+            if titles
+            else ["未能成功抓取新闻"]
+        )

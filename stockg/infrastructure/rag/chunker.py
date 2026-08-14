@@ -1,4 +1,5 @@
 """文本切分器：面向中英文的递归字符切分。"""
+
 from __future__ import annotations
 
 from stockg.domain import Chunk, Document, TextSplitter
@@ -31,7 +32,9 @@ class RecursiveCharacterSplitter(TextSplitter):
             sep = seps[0] if seps else ""
             if sep == "":
                 # 按字符硬切
-                return [part[i : i + chunk_size] for i in range(0, len(part), chunk_size)]
+                return [
+                    part[i : i + chunk_size] for i in range(0, len(part), chunk_size)
+                ]
             if sep not in part:
                 return _recursive_split(part, seps[1:])
             segments = part.split(sep)
@@ -72,6 +75,6 @@ class RecursiveCharacterSplitter(TextSplitter):
             if i < len(merged) - 1:
                 nxt = merged[i + 1]
                 if len(piece) < chunk_size:
-                    extra = nxt[: chunk_overlap]
+                    extra = nxt[:chunk_overlap]
                     windowed[-1] = piece + extra
         return windowed

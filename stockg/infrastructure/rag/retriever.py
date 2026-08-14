@@ -1,4 +1,5 @@
 """检索器：把 Embedder + VectorStore 组装成对外的检索能力。"""
+
 from __future__ import annotations
 
 from stockg.domain import Embedder, RetrievedContext, Retriever, VectorStore
