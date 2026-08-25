@@ -88,10 +88,16 @@ async def _fetch_snapshot_async(ticker: str, market: Market) -> StockSnapshot:
     return ctx.snapshot_cache[cache_key]
 
 
-def _retrieve_knowledge(ticker: str, top_k: int) -> str:
-    query = f"从本地知识库搜索股票{ticker}相关的知识，包括过往研报、公告、新闻等"
+def search_knowledge(query: str, top_k: int) -> str:
+    """使用本地知识库检索指定研究问题。"""
+    normalized_query = query.strip()
+    if not normalized_query:
+        raise ValueError("query 不能为空")
+    if top_k <= 0:
+        raise ValueError("top_k 必须大于 0")
+
     retriever = _get_rag_retriever()
-    results = retriever.retrieve(query, top_k=top_k)
+    results = retriever.retrieve(normalized_query, top_k=top_k)
     if not results:
         return (
             "知识库为空或未检索到相关内容。请先运行 "
@@ -102,6 +108,11 @@ def _retrieve_knowledge(ticker: str, top_k: int) -> str:
         for result in results
     ]
     return "知识库检索结果:\n" + "\n\n".join(lines)
+
+
+def _retrieve_knowledge(ticker: str, top_k: int) -> str:
+    query = f"从本地知识库搜索股票{ticker}相关的知识，包括过往研报、公告、新闻等"
+    return search_knowledge(query, top_k)
 
 
 @observe(name="research_fetch_market_data")
