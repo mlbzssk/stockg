@@ -34,6 +34,19 @@ DeepSeek 综合分析
 评级 + 理由 + 原始上下文 + 成本估算
 ```
 
+### 独立 Plan-and-Execute 资料收集流程
+
+`stockg.domain.plan_execute_research_agent` 提供独立的实验性资料收集流程，不接入现有主分析 Agent。流程由 Planner 生成最多 4 个受约束步骤，Executor 并发执行行情与知识库检索，Replanner 最多补充执行 1 轮；模型不可用时会降级为确定性计划。
+
+```bash
+uv run python -m stockg.domain.plan_execute_research_agent AAPL \
+  --market us \
+  --objective "收集近期经营风险和潜在催化剂" \
+  --rag-top-k 3
+```
+
+不传参数时默认研究 A 股代码 `600519`。该入口只汇总资料，不生成投资评级，也不会改变 CLI 和 HTTP API 当前使用的主流程。
+
 ## 环境要求
 
 - Python `>= 3.10`
